@@ -199,3 +199,109 @@ credentials/
 !package.json
 !tsconfig.json
 !pyproject.toml
+
+# Security and Secrets - Enhanced for A2A/MCP
+*.key
+*.pem
+*.p12
+*.pfx
+*.crt
+*.cert
+*.csr
+*_key
+*_secret
+*secret*
+*key*
+*token*
+*password*
+*auth*
+api_key*
+api-key*
+access_token*
+refresh_token*
+oauth*
+jwt*
+bearer*
+
+# Environment files - all variations
+.env
+.env.*
+.environment
+*.env
+env.local
+env.production
+env.development
+env.test
+env.staging
+
+# MCP Server configurations with secrets
+mcp-servers/
+mcp_servers/
+*mcp*config*
+*mcp*.json
+mcp.yaml
+mcp.yml
+
+# A2A Protocol secrets
+a2a/
+a2a_*
+*a2a*
+agent-keys/
+agent_keys/
+discovery/
+.well-known/
+
+# Email/Gmail secrets
+gmail_credentials.json
+gmail_token.json
+email_config.*
+smtp_*
+
+# Alpaca/Trading API secrets
+alpaca_*
+trading_*
+market_*
+broker_*
+
+# Kubernetes/Helm secrets (local overrides)
+values.local.yaml
+values.secret.yaml
+values.*.yaml
+!values.yaml
+secrets.yaml.local
+*-secrets.yaml
+rendered-templates.yaml
+rendered-*.yaml
+
+# Docker secrets
+docker-compose.override.yml
+docker-compose.local.yml
+.dockerignore.local
+
+# Temporary credential files
+temp_*
+tmp_*
+*.tmp
+.cache/
+cache/
+
+# IDE and editor files that might contain secrets
+*.code-workspace.local
+.vscode/settings.json.local
+.vscode/mcp.json.local
+.vscode/secrets.json
+.idea/workspace.xml.local
+
+# Log files that might contain sensitive data
+*.log
+logs/
+log/
+
+# Backup files that might contain secrets
+*.bak
+*.backup
+*~
+.DS_Store
+Thumbs.db
+
+# Contains AI-generated edits.
