@@ -1,0 +1,6 @@
+marketAnalyst:
+  image: market-analyst:latest
+planner:
+  image: planner:latest
+mailer:
+  image: mailer:latest
