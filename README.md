@@ -46,24 +46,56 @@ validate-helm.ps1    # Helm chart validation
 - kubectl configured
 - Required API credentials (OpenAI, Alpaca, Gmail)
 
+## 🚀 Quick Start
+
+### Prerequisites
+- Kubernetes cluster (local or cloud)
+- Helm 3.0+
+- kubectl configured
+- Required API credentials (OpenAI, Alpaca, Gmail)
+
 ### 1. Validate Configuration
 ```powershell
+# Validate Helm chart
 ./validate-helm.ps1
+
+# Check cluster connectivity
+kubectl cluster-info
 ```
 
-### 2. Deploy with Helm
+### 2. Set Up Secrets
 ```powershell
-# Interactive deployment with secret creation
-./deploy.ps1 -CreateSecrets
+# Create namespace
+kubectl create namespace stockripper
 
-# Or deploy with existing secrets
-./deploy.ps1 -Action install
+# Create API key secrets
+kubectl create secret generic openai-secret \
+  --from-literal=api-key="your-openai-api-key" \
+  -n stockripper
+
+kubectl create secret generic alpaca-secret \
+  --from-literal=api-key="your-alpaca-api-key" \
+  --from-literal=secret-key="your-alpaca-secret-key" \
+  -n stockripper
 ```
 
-### 3. Verify Deployment
-```bash
+### 3. Deploy with Helm
+```powershell
+# Deploy entire system
+./deploy.ps1 -Action install -Namespace stockripper
+
+# Or deploy manually
+helm install stockripper ./helm -n stockripper
+```
+
+### 4. Verify Deployment
+```powershell
 kubectl get pods -n stockripper
-kubectl get svc -n stockripper
+kubectl get services -n stockripper
+
+# Test A2A discovery
+kubectl port-forward service/market-analyst 8001:8001 -n stockripper
+curl http://localhost:8001/.well-known/agent.json
 ```
 
 ## 🔧 Development
@@ -73,7 +105,7 @@ kubectl get svc -n stockripper
 # Install dependencies
 pip install -r requirements.txt
 
-# Copy environment template
+# Copy environment template  
 cp .env.example .env
 
 # Edit .env with your credentials
