@@ -1,0 +1,31 @@
+{
+  "mcpServers": {
+    "github": {
+      "command": "npx",
+      "args": ["-y", "@modelcontextprotocol/server-github"],
+      "env": {
+        "GITHUB_PERSONAL_ACCESS_TOKEN": "your-github-token-here"
+      }
+    },
+    "gmail": {
+      "command": "python",
+      "args": ["-m", "mcp_server_gmail"],
+      "env": {
+        "GMAIL_CREDENTIALS_FILE": "./credentials/gmail_credentials.json",
+        "GMAIL_TOKEN_FILE": "./credentials/gmail_token.json"
+      }
+    },
+    "alpaca": {
+      "command": "python", 
+      "args": ["-m", "mcp_server_alpaca"],
+      "env": {
+        "ALPACA_API_KEY": "your-alpaca-api-key-here",
+        "ALPACA_SECRET_KEY": "your-alpaca-secret-key-here",
+        "ALPACA_BASE_URL": "https://paper-api.alpaca.markets"
+      }
+    }
+  }
+}
+# Template file - copy to .vscode/mcp.json and fill in real values
+# This file shows the expected structure for MCP server configuration
+# Never commit real API keys or tokens!
