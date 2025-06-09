@@ -1,0 +1,670 @@
+install.go:224: 2025-06-08 21:53:07.1216881 -0700 PDT m=+0.082481801 [debug] Original chart version: ""
+install.go:241: 2025-06-08 21:53:07.1222046 -0700 PDT m=+0.082998301 [debug] CHART PATH: C:\Users\randy\Git\stockripperv2\helm
+
+---
+# Source: stockripperv2/templates/namespace.yaml
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: stockripper
+  labels:
+    helm.sh/chart: stockripperv2-1.0.0
+    app.kubernetes.io/name: stockripperv2
+    app.kubernetes.io/instance: test-release
+    app.kubernetes.io/version: "1.0.0"
+    app.kubernetes.io/managed-by: Helm
+    app.kubernetes.io/component: namespace
+
+# Contains AI-generated edits.
+---
+# Source: stockripperv2/templates/secrets.yaml
+apiVersion: v1
+kind: Secret
+metadata:
+  name: openai-secret
+  namespace: stockripper
+  labels:
+    helm.sh/chart: stockripperv2-1.0.0
+    app.kubernetes.io/name: stockripperv2
+    app.kubernetes.io/instance: test-release
+    app.kubernetes.io/version: "1.0.0"
+    app.kubernetes.io/managed-by: Helm
+type: Opaque
+data:
+  api-key: ""
+---
+# Source: stockripperv2/templates/secrets.yaml
+apiVersion: v1
+kind: Secret
+metadata:
+  name: alpaca-secret
+  namespace: stockripper
+  labels:
+    helm.sh/chart: stockripperv2-1.0.0
+    app.kubernetes.io/name: stockripperv2
+    app.kubernetes.io/instance: test-release
+    app.kubernetes.io/version: "1.0.0"
+    app.kubernetes.io/managed-by: Helm
+type: Opaque
+data:
+  api-key: ""
+  secret-key: ""
+---
+# Source: stockripperv2/templates/secrets.yaml
+apiVersion: v1
+kind: Secret
+metadata:
+  name: gmail-credentials
+  namespace: stockripper
+  labels:
+    helm.sh/chart: stockripperv2-1.0.0
+    app.kubernetes.io/name: stockripperv2
+    app.kubernetes.io/instance: test-release
+    app.kubernetes.io/version: "1.0.0"
+    app.kubernetes.io/managed-by: Helm
+type: Opaque
+data:
+  credentials.json: ""
+  token.json: ""
+
+# Contains AI-generated edits.
+---
+# Source: stockripperv2/templates/alpaca-mcp-service.yaml
+apiVersion: v1
+kind: Service
+metadata:
+  name: alpaca-mcp
+  namespace: stockripper
+  labels:
+    helm.sh/chart: stockripperv2-1.0.0
+    app.kubernetes.io/name: stockripperv2
+    app.kubernetes.io/instance: test-release
+    app.kubernetes.io/version: "1.0.0"
+    app.kubernetes.io/managed-by: Helm
+    app.kubernetes.io/component: mcp-server
+    app.kubernetes.io/name: alpaca-mcp
+spec:
+  type: ClusterIP
+  ports:
+    - port: 9001
+      targetPort: 9001
+      protocol: TCP
+      name: http
+  selector:
+    app.kubernetes.io/name: alpaca-mcp
+    app.kubernetes.io/instance: test-release
+
+# Contains AI-generated edits.
+---
+# Source: stockripperv2/templates/gmail-mcp-service.yaml
+apiVersion: v1
+kind: Service
+metadata:
+  name: gmail-mcp
+  namespace: stockripper
+  labels:
+    helm.sh/chart: stockripperv2-1.0.0
+    app.kubernetes.io/name: stockripperv2
+    app.kubernetes.io/instance: test-release
+    app.kubernetes.io/version: "1.0.0"
+    app.kubernetes.io/managed-by: Helm
+    app.kubernetes.io/component: mcp-server
+    app.kubernetes.io/name: gmail-mcp
+spec:
+  type: ClusterIP
+  ports:
+    - port: 9002
+      targetPort: 9002
+      protocol: TCP
+      name: http
+  selector:
+    app.kubernetes.io/name: gmail-mcp
+    app.kubernetes.io/instance: test-release
+
+# Contains AI-generated edits.
+---
+# Source: stockripperv2/templates/mailer-service.yaml
+apiVersion: v1
+kind: Service
+metadata:
+  name: mailer
+  namespace: stockripper
+  labels:
+    app: mailer
+    component: agent
+    chart: stockripperv2-1.0.0
+    release: test-release
+    heritage: Helm
+spec:
+  type: ClusterIP
+  ports:
+    - port: 8003
+      targetPort: 8003
+      protocol: TCP
+      name: http
+  selector:
+    app: mailer
+    release: test-release
+---
+# Source: stockripperv2/templates/market-analyst-service.yaml
+apiVersion: v1
+kind: Service
+metadata:
+  name: market-analyst
+  namespace: stockripper
+  labels:
+    app: market-analyst
+    component: agent
+    chart: stockripperv2-1.0.0
+    release: test-release
+    heritage: Helm
+spec:
+  type: ClusterIP
+  ports:
+    - port: 8001
+      targetPort: 8001
+      protocol: TCP
+      name: http
+  selector:
+    app: market-analyst
+    release: test-release
+---
+# Source: stockripperv2/templates/planner-service.yaml
+apiVersion: v1
+kind: Service
+metadata:
+  name: planner
+  namespace: stockripper
+  labels:
+    app: planner
+    component: agent
+    chart: stockripperv2-1.0.0
+    release: test-release
+    heritage: Helm
+spec:
+  type: ClusterIP
+  ports:
+    - port: 8002
+      targetPort: 8002
+      protocol: TCP
+      name: http
+  selector:
+    app: planner
+    release: test-release
+---
+# Source: stockripperv2/templates/alpaca-mcp-deployment.yaml
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: alpaca-mcp
+  namespace: stockripper
+  labels:
+    helm.sh/chart: stockripperv2-1.0.0
+    app.kubernetes.io/name: stockripperv2
+    app.kubernetes.io/instance: test-release
+    app.kubernetes.io/version: "1.0.0"
+    app.kubernetes.io/managed-by: Helm
+    app.kubernetes.io/component: mcp-server
+    app.kubernetes.io/name: alpaca-mcp
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: alpaca-mcp
+      app.kubernetes.io/instance: test-release
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: alpaca-mcp
+        app.kubernetes.io/instance: test-release
+        app.kubernetes.io/component: mcp-server
+    spec:
+      containers:
+        - name: alpaca-mcp
+          image: "ghcr.io/yourusername/stockripper/alpaca-mcp:1.0.0"
+          imagePullPolicy: IfNotPresent
+          ports:
+            - name: http
+              containerPort: 9001
+              protocol: TCP
+          env:
+            - name: PORT
+              value: "9001"
+            - name: ALPACA_API_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: alpaca-secret
+                  key: api-key
+            - name: ALPACA_SECRET_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: alpaca-secret
+                  key: secret-key
+            - name: ALPACA_BASE_URL
+              value: "https://paper-api.alpaca.markets"
+            - name: LOG_LEVEL
+              value: "INFO"
+            - name: LOG_FORMAT
+              value: "json"
+          resources:
+            limits:
+              cpu: 200m
+              memory: 256Mi
+            requests:
+              cpu: 100m
+              memory: 128Mi
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: http
+            initialDelaySeconds: 30
+            periodSeconds: 10
+          readinessProbe:
+            httpGet:
+              path: /ready
+              port: http
+            initialDelaySeconds: 5
+            periodSeconds: 5
+
+# Contains AI-generated edits.
+---
+# Source: stockripperv2/templates/gmail-mcp-deployment.yaml
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: gmail-mcp
+  namespace: stockripper
+  labels:
+    helm.sh/chart: stockripperv2-1.0.0
+    app.kubernetes.io/name: stockripperv2
+    app.kubernetes.io/instance: test-release
+    app.kubernetes.io/version: "1.0.0"
+    app.kubernetes.io/managed-by: Helm
+    app.kubernetes.io/component: mcp-server
+    app.kubernetes.io/name: gmail-mcp
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: gmail-mcp
+      app.kubernetes.io/instance: test-release
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: gmail-mcp
+        app.kubernetes.io/instance: test-release
+        app.kubernetes.io/component: mcp-server
+    spec:
+      containers:
+        - name: gmail-mcp
+          image: "ghcr.io/yourusername/stockripper/gmail-mcp:1.0.0"
+          imagePullPolicy: IfNotPresent
+          ports:
+            - name: http
+              containerPort: 9002
+              protocol: TCP
+          env:
+            - name: PORT
+              value: "9002"
+            - name: LOG_LEVEL
+              value: "INFO"
+            - name: LOG_FORMAT
+              value: "json"
+          volumeMounts:
+            - name: gmail-credentials
+              mountPath: /app/credentials
+              readOnly: true
+          resources:
+            limits:
+              cpu: 200m
+              memory: 256Mi
+            requests:
+              cpu: 100m
+              memory: 128Mi
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: http
+            initialDelaySeconds: 30
+            periodSeconds: 10
+          readinessProbe:
+            httpGet:
+              path: /ready
+              port: http
+            initialDelaySeconds: 5
+            periodSeconds: 5
+      volumes:
+        - name: gmail-credentials
+          secret:
+            secretName: gmail-credentials
+
+# Contains AI-generated edits.
+---
+# Source: stockripperv2/templates/mailer-deployment.yaml
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: mailer
+  namespace: stockripper
+  labels:
+    app: mailer
+    component: agent
+    chart: stockripperv2-1.0.0
+    release: test-release
+    heritage: Helm
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: mailer
+      release: test-release
+  template:
+    metadata:
+      labels:
+        app: mailer
+        release: test-release
+    spec:
+      containers:
+        - name: mailer
+          image: "ghcr.io/yourusername/stockripper/mailer:1.0.0"
+          imagePullPolicy: IfNotPresent
+          ports:
+            - name: http
+              containerPort: 8003
+              protocol: TCP
+          env:
+            - name: OPENAI_API_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: openai-secret
+                  key: api-key
+            - name: OPENAI_MODEL
+              value: "gpt-4o-mini"
+            - name: GMAIL_MCP_SERVER_URL
+              value: "http://gmail-mcp:9002"
+            - name: GMAIL_CREDENTIALS_PATH
+              value: "/etc/gmail/credentials.json"
+            - name: GMAIL_TOKEN_PATH
+              value: "/etc/gmail/token.json"
+            - name: DEFAULT_EMAIL_RECIPIENT
+              value: "admin@stockripper.com"
+            - name: LOG_LEVEL
+              value: "INFO"
+            - name: LOG_FORMAT
+              value: "json"
+            - name: A2A_TIMEOUT
+              value: "30"
+            - name: A2A_RETRY_ATTEMPTS
+              value: "3"
+            - name: A2A_DISCOVERY_ENABLED
+              value: "true"
+          volumeMounts:
+            - name: gmail-credentials
+              mountPath: /etc/gmail
+              readOnly: true
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: http
+            initialDelaySeconds: 30
+            periodSeconds: 10
+          readinessProbe:
+            httpGet:
+              path: /.well-known/agent.json
+              port: http
+            initialDelaySeconds: 5
+            periodSeconds: 5
+          resources:
+            limits:
+              cpu: 300m
+              memory: 256Mi
+            requests:
+              cpu: 150m
+              memory: 128Mi
+      volumes:
+        - name: gmail-credentials
+          secret:
+            secretName: gmail-secret
+      restartPolicy: Always
+---
+# Source: stockripperv2/templates/market-analyst-deployment.yaml
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: market-analyst
+  namespace: stockripper
+  labels:
+    app: market-analyst
+    component: agent
+    chart: stockripperv2-1.0.0
+    release: test-release
+    heritage: Helm
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: market-analyst
+      release: test-release
+  template:
+    metadata:
+      labels:
+        app: market-analyst
+        release: test-release
+    spec:
+      containers:
+        - name: market-analyst
+          image: "ghcr.io/yourusername/stockripper/market-analyst:1.0.0"
+          imagePullPolicy: IfNotPresent
+          ports:
+            - name: http
+              containerPort: 8001
+              protocol: TCP
+          env:
+            - name: OPENAI_API_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: openai-secret
+                  key: api-key
+            - name: OPENAI_MODEL
+              value: "gpt-4o-mini"
+            - name: ALPACA_API_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: alpaca-secret
+                  key: api-key
+            - name: ALPACA_SECRET_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: alpaca-secret
+                  key: secret-key
+            - name: ALPACA_BASE_URL
+              value: "https://paper-api.alpaca.markets"
+            - name: ALPACA_MCP_URL
+              value: "http://alpaca-mcp:9001"
+            - name: LOG_LEVEL
+              value: "INFO"
+            - name: LOG_FORMAT
+              value: "json"
+            - name: A2A_TIMEOUT
+              value: "30"
+            - name: A2A_RETRY_ATTEMPTS
+              value: "3"
+            - name: A2A_DISCOVERY_ENABLED
+              value: "true"
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: http
+            initialDelaySeconds: 30
+            periodSeconds: 10
+          readinessProbe:
+            httpGet:
+              path: /.well-known/agent.json
+              port: http
+            initialDelaySeconds: 5
+            periodSeconds: 5
+          resources:
+            limits:
+              cpu: 500m
+              memory: 512Mi
+            requests:
+              cpu: 250m
+              memory: 256Mi
+      restartPolicy: Always
+---
+# Source: stockripperv2/templates/planner-deployment.yaml
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: planner
+  namespace: stockripper
+  labels:
+    app: planner
+    component: agent
+    chart: stockripperv2-1.0.0
+    release: test-release
+    heritage: Helm
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: planner
+      release: test-release
+  template:
+    metadata:
+      labels:
+        app: planner
+        release: test-release
+    spec:
+      containers:
+        - name: planner
+          image: "ghcr.io/yourusername/stockripper/planner:1.0.0"
+          imagePullPolicy: IfNotPresent
+          ports:
+            - name: http
+              containerPort: 8002
+              protocol: TCP
+          env:
+            - name: OPENAI_API_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: openai-secret
+                  key: api-key
+            - name: OPENAI_MODEL
+              value: "gpt-4o-mini"
+            - name: MARKET_ANALYST_URL
+              value: "http://market-analyst:8001"
+            - name: LOG_LEVEL
+              value: "INFO"
+            - name: LOG_FORMAT
+              value: "json"
+            - name: A2A_TIMEOUT
+              value: "30"
+            - name: A2A_RETRY_ATTEMPTS
+              value: "3"
+            - name: A2A_DISCOVERY_ENABLED
+              value: "true"
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: http
+            initialDelaySeconds: 30
+            periodSeconds: 10
+          readinessProbe:
+            httpGet:
+              path: /.well-known/agent.json
+              port: http
+            initialDelaySeconds: 5
+            periodSeconds: 5
+          resources:
+            limits:
+              cpu: 500m
+              memory: 512Mi
+            requests:
+              cpu: 250m
+              memory: 256Mi
+      restartPolicy: Always
+---
+# Source: stockripperv2/templates/mailer-ingress.yaml
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: mailer
+  namespace: stockripper
+  labels:
+    app: mailer
+    component: agent
+    chart: stockripperv2-1.0.0
+    release: test-release
+    heritage: Helm
+  annotations:
+    nginx.ingress.kubernetes.io/rewrite-target: /
+spec:
+  ingressClassName: nginx
+  rules:
+    - host: "mailer.local"
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: mailer
+                port:
+                  number: 8003
+---
+# Source: stockripperv2/templates/market-analyst-ingress.yaml
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: market-analyst
+  namespace: stockripper
+  labels:
+    app: market-analyst
+    component: agent
+    chart: stockripperv2-1.0.0
+    release: test-release
+    heritage: Helm
+  annotations:
+    nginx.ingress.kubernetes.io/rewrite-target: /
+spec:
+  ingressClassName: nginx
+  rules:
+    - host: "market-analyst.local"
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: market-analyst
+                port:
+                  number: 8001
+---
+# Source: stockripperv2/templates/planner-ingress.yaml
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: planner
+  namespace: stockripper
+  labels:
+    app: planner
+    component: agent
+    chart: stockripperv2-1.0.0
+    release: test-release
+    heritage: Helm
+  annotations:
+    nginx.ingress.kubernetes.io/rewrite-target: /
+spec:
+  ingressClassName: nginx
+  rules:
+    - host: "planner.local"
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: planner
+                port:
+                  number: 8002

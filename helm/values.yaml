@@ -190,19 +190,19 @@ secrets:
   openai:
     create: true
     data:
-      api-key: ""  # Base64 encoded
+      apiKey: ""  # Base64 encoded
   
   alpaca:
     create: true
     data:
-      api-key: ""  # Base64 encoded
-      secret-key: ""  # Base64 encoded
+      apiKey: ""  # Base64 encoded
+      secretKey: ""  # Base64 encoded
   
   gmail:
     create: true
     data:
-      credentials.json: ""  # Base64 encoded credentials file
-      token.json: ""  # Base64 encoded token file
+      credentialsJson: ""  # Base64 encoded credentials file
+      tokenJson: ""  # Base64 encoded token file
 
 # ServiceMonitor for Prometheus (optional)
 monitoring:
