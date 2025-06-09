@@ -115,4 +115,18 @@ If secrets are accidentally committed:
 - **detect-secrets:** Pre-commit hook for secret detection
 - **GitGuardian:** Automated secret scanning
 
+## Configuration Security
+
+### VS Code MCP Configuration
+- Copy `.vscode/mcp.json.template` to `.vscode/mcp.json`
+- Fill in your real API keys in the copied file
+- Never commit the real `mcp.json` file (it's in `.gitignore`)
+
+### GitHub and VS Code Folders
+The following folders may contain sensitive information and are excluded from git:
+- `.vscode/` - VS Code settings that may contain API keys
+- `.github/secrets/` - GitHub secrets (if created locally)
+- `.github/personal/` - Personal GitHub configurations
+- `.github/local/` - Local GitHub configurations
+
 # Contains AI-generated edits.

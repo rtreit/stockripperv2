@@ -126,6 +126,14 @@ pytest tests/
 
 ## 🔐 Security & Credentials
 
+⚠️ **CRITICAL SECURITY NOTICE**: Never commit real API keys or secrets to Git!
+
+### Quick Secure Setup
+```bash
+# Use the secure setup script
+python setup_secure.py
+```
+
 ### Required Secrets
 Create these Kubernetes secrets before deployment:
 
@@ -154,6 +162,13 @@ Place these files in the `credentials/` directory:
 - `gmail-token.json` - OAuth2 refresh token (generated on first auth)
 
 See `credentials/README.md` for detailed setup instructions.
+
+### Security Best Practices
+- 📋 Read `SECURITY.md` for comprehensive security guidelines
+- 🔒 Use `setup_secure.py` to configure environment safely
+- 🚫 Never commit `.env` files or real credentials
+- 🔄 Regularly rotate API keys and secrets
+- 🔍 Review `.gitignore` patterns before committing
 
 ## License
 
