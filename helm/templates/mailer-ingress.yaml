@@ -1,0 +1,36 @@
+{{- if and .Values.mailer.enabled .Values.mailer.ingress.enabled }}
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: {{ .Values.mailer.name }}
+  namespace: {{ .Values.global.namespace }}
+  labels:
+    app: {{ .Values.mailer.name }}
+    component: agent
+    chart: {{ include "stockripperv2.chart" . }}
+    release: {{ .Release.Name }}
+    heritage: {{ .Release.Service }}
+  {{- with .Values.mailer.ingress.annotations }}
+  annotations:
+    {{- toYaml . | nindent 4 }}
+  {{- end }}
+spec:
+  {{- if .Values.mailer.ingress.className }}
+  ingressClassName: {{ .Values.mailer.ingress.className }}
+  {{- end }}
+  rules:
+    {{- range .Values.mailer.ingress.hosts }}
+    - host: {{ .host | quote }}
+      http:
+        paths:
+          {{- range .paths }}
+          - path: {{ .path }}
+            pathType: {{ .pathType }}
+            backend:
+              service:
+                name: {{ $.Values.mailer.name }}
+                port:
+                  number: {{ $.Values.mailer.service.port }}
+          {{- end }}
+    {{- end }}
+{{- end }}

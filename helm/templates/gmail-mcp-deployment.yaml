@@ -1,0 +1,61 @@
+{{- if .Values.mcpServers.gmail.enabled }}
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ .Values.mcpServers.gmail.name }}
+  namespace: {{ .Values.global.namespace | default .Release.Namespace }}
+  labels:
+    {{- include "stockripperv2.labels" . | nindent 4 }}
+    app.kubernetes.io/component: mcp-server
+    app.kubernetes.io/name: gmail-mcp
+spec:
+  replicas: {{ .Values.mcpServers.gmail.replicaCount }}
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: gmail-mcp
+      app.kubernetes.io/instance: {{ .Release.Name }}
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: gmail-mcp
+        app.kubernetes.io/instance: {{ .Release.Name }}
+        app.kubernetes.io/component: mcp-server
+    spec:
+      containers:
+        - name: gmail-mcp
+          image: "{{ .Values.global.imageRegistry }}/{{ .Values.mcpServers.gmail.image.repository }}:{{ .Values.mcpServers.gmail.image.tag }}"
+          imagePullPolicy: {{ .Values.mcpServers.gmail.image.pullPolicy }}
+          ports:
+            - name: http
+              containerPort: {{ .Values.mcpServers.gmail.service.targetPort }}
+              protocol: TCP
+          env:
+            - name: PORT
+              value: "{{ .Values.mcpServers.gmail.service.targetPort }}"
+            - name: LOG_LEVEL
+              value: "{{ .Values.env.logging.level }}"
+            - name: LOG_FORMAT
+              value: "{{ .Values.env.logging.format }}"
+          volumeMounts:
+            - name: gmail-credentials
+              mountPath: /app/credentials
+              readOnly: true
+          resources:
+            {{- toYaml .Values.mcpServers.gmail.resources | nindent 12 }}
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: http
+            initialDelaySeconds: 30
+            periodSeconds: 10
+          readinessProbe:
+            httpGet:
+              path: /ready
+              port: http
+            initialDelaySeconds: 5
+            periodSeconds: 5
+      volumes:
+        {{- toYaml .Values.mcpServers.gmail.volumes | nindent 8 }}
+{{- end }}
+
+# Contains AI-generated edits.

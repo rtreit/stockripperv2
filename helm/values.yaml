@@ -1,6 +1,215 @@
+# Global configuration
+global:
+  namespace: stockripper
+  imageRegistry: ghcr.io/yourusername
+  imagePullPolicy: IfNotPresent
+  
+# Common environment variables
+env:
+  openai:
+    apiKey: ""  # Set via secret
+    model: "gpt-4o-mini"
+  logging:
+    level: "INFO"
+    format: "json"
+  a2a:
+    timeout: 30
+    retryAttempts: 3
+    discoveryEnabled: true
+
+# Market Analyst Agent
 marketAnalyst:
-  image: market-analyst:latest
+  enabled: true
+  name: market-analyst
+  replicaCount: 1
+  image:
+    repository: stockripper/market-analyst
+    tag: "1.0.0"
+    pullPolicy: IfNotPresent
+  
+  service:
+    type: ClusterIP
+    port: 8001
+    targetPort: 8001
+  
+  ingress:
+    enabled: true
+    className: "nginx"
+    annotations:
+      nginx.ingress.kubernetes.io/rewrite-target: /
+    hosts:
+      - host: market-analyst.local
+        paths:
+          - path: /
+            pathType: Prefix
+  
+  resources:
+    limits:
+      cpu: 500m
+      memory: 512Mi
+    requests:
+      cpu: 250m
+      memory: 256Mi
+  
+  env:
+    ALPACA_API_KEY: ""  # Set via secret
+    ALPACA_SECRET_KEY: ""  # Set via secret
+    ALPACA_BASE_URL: "https://paper-api.alpaca.markets"
+    ALPACA_MCP_URL: "http://alpaca-mcp:9001"
+
+# Planner Agent  
 planner:
-  image: planner:latest
+  enabled: true
+  name: planner
+  replicaCount: 1
+  image:
+    repository: stockripper/planner
+    tag: "1.0.0"
+    pullPolicy: IfNotPresent
+  
+  service:
+    type: ClusterIP
+    port: 8002
+    targetPort: 8002
+  
+  ingress:
+    enabled: true
+    className: "nginx"
+    annotations:
+      nginx.ingress.kubernetes.io/rewrite-target: /
+    hosts:
+      - host: planner.local
+        paths:
+          - path: /
+            pathType: Prefix
+  
+  resources:
+    limits:
+      cpu: 500m
+      memory: 512Mi
+    requests:
+      cpu: 250m
+      memory: 256Mi
+  
+  env:
+    MARKET_ANALYST_URL: "http://market-analyst:8001"
+
+# Mailer Agent
 mailer:
-  image: mailer:latest
+  enabled: true
+  name: mailer
+  replicaCount: 1
+  image:
+    repository: stockripper/mailer
+    tag: "1.0.0"
+    pullPolicy: IfNotPresent
+  
+  service:
+    type: ClusterIP
+    port: 8003
+    targetPort: 8003
+  
+  ingress:
+    enabled: true
+    className: "nginx"
+    annotations:
+      nginx.ingress.kubernetes.io/rewrite-target: /
+    hosts:
+      - host: mailer.local
+        paths:
+          - path: /
+            pathType: Prefix
+  
+  resources:
+    limits:
+      cpu: 300m
+      memory: 256Mi
+    requests:
+      cpu: 150m
+      memory: 128Mi
+  
+  env:
+    GMAIL_MCP_SERVER_URL: "http://gmail-mcp:9002"
+    DEFAULT_EMAIL_RECIPIENT: "admin@stockripper.com"
+
+# MCP Servers
+mcpServers:
+  # Alpaca MCP Server
+  alpaca:
+    enabled: true
+    name: alpaca-mcp
+    replicaCount: 1
+    image:
+      repository: stockripper/alpaca-mcp
+      tag: "1.0.0"
+      pullPolicy: IfNotPresent
+    
+    service:
+      type: ClusterIP
+      port: 9001
+      targetPort: 9001
+    
+    resources:
+      limits:
+        cpu: 200m
+        memory: 256Mi
+      requests:
+        cpu: 100m
+        memory: 128Mi
+  
+  # Gmail MCP Server
+  gmail:
+    enabled: true
+    name: gmail-mcp
+    replicaCount: 1
+    image:
+      repository: stockripper/gmail-mcp
+      tag: "1.0.0"
+      pullPolicy: IfNotPresent
+    
+    service:
+      type: ClusterIP
+      port: 9002
+      targetPort: 9002
+    
+    resources:
+      limits:
+        cpu: 200m
+        memory: 256Mi
+      requests:
+        cpu: 100m
+        memory: 128Mi
+    
+    volumes:
+      - name: gmail-credentials
+        secret:
+          secretName: gmail-credentials
+
+# Secrets configuration
+secrets:
+  openai:
+    create: true
+    data:
+      api-key: ""  # Base64 encoded
+  
+  alpaca:
+    create: true
+    data:
+      api-key: ""  # Base64 encoded
+      secret-key: ""  # Base64 encoded
+  
+  gmail:
+    create: true
+    data:
+      credentials.json: ""  # Base64 encoded credentials file
+      token.json: ""  # Base64 encoded token file
+
+# ServiceMonitor for Prometheus (optional)
+monitoring:
+  enabled: false
+  serviceMonitor:
+    enabled: false
+    namespace: monitoring
+    labels: {}
+
+# Contains AI-generated edits.

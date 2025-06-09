@@ -1,5 +1,18 @@
 apiVersion: v2
 name: stockripperv2
-version: 0.1.0
-description: Umbrella chart for MarketAnalyst, Planner and Mailer agents
+version: 1.0.0
+description: A2A-compliant trading agents with MCP integration
+appVersion: "1.0.0"
+keywords:
+  - trading
+  - agents
+  - a2a
+  - mcp
+  - langchain
+home: https://github.com/yourusername/stockripperv2
+sources:
+  - https://github.com/yourusername/stockripperv2
+maintainers:
+  - name: Randy
+    email: randy@stockripper.com
 

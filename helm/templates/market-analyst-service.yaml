@@ -1,0 +1,23 @@
+{{- if .Values.marketAnalyst.enabled }}
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ .Values.marketAnalyst.name }}
+  namespace: {{ .Values.global.namespace }}
+  labels:
+    app: {{ .Values.marketAnalyst.name }}
+    component: agent
+    chart: {{ include "stockripperv2.chart" . }}
+    release: {{ .Release.Name }}
+    heritage: {{ .Release.Service }}
+spec:
+  type: {{ .Values.marketAnalyst.service.type }}
+  ports:
+    - port: {{ .Values.marketAnalyst.service.port }}
+      targetPort: {{ .Values.marketAnalyst.service.targetPort }}
+      protocol: TCP
+      name: http
+  selector:
+    app: {{ .Values.marketAnalyst.name }}
+    release: {{ .Release.Name }}
+{{- end }}

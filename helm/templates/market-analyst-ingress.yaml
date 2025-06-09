@@ -1,0 +1,36 @@
+{{- if and .Values.marketAnalyst.enabled .Values.marketAnalyst.ingress.enabled }}
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: {{ .Values.marketAnalyst.name }}
+  namespace: {{ .Values.global.namespace }}
+  labels:
+    app: {{ .Values.marketAnalyst.name }}
+    component: agent
+    chart: {{ include "stockripperv2.chart" . }}
+    release: {{ .Release.Name }}
+    heritage: {{ .Release.Service }}
+  {{- with .Values.marketAnalyst.ingress.annotations }}
+  annotations:
+    {{- toYaml . | nindent 4 }}
+  {{- end }}
+spec:
+  {{- if .Values.marketAnalyst.ingress.className }}
+  ingressClassName: {{ .Values.marketAnalyst.ingress.className }}
+  {{- end }}
+  rules:
+    {{- range .Values.marketAnalyst.ingress.hosts }}
+    - host: {{ .host | quote }}
+      http:
+        paths:
+          {{- range .paths }}
+          - path: {{ .path }}
+            pathType: {{ .pathType }}
+            backend:
+              service:
+                name: {{ $.Values.marketAnalyst.name }}
+                port:
+                  number: {{ $.Values.marketAnalyst.service.port }}
+          {{- end }}
+    {{- end }}
+{{- end }}

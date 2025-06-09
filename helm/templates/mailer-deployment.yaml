@@ -1,0 +1,84 @@
+{{- if .Values.mailer.enabled }}
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ .Values.mailer.name }}
+  namespace: {{ .Values.global.namespace }}
+  labels:
+    app: {{ .Values.mailer.name }}
+    component: agent
+    chart: {{ include "stockripperv2.chart" . }}
+    release: {{ .Release.Name }}
+    heritage: {{ .Release.Service }}
+spec:
+  replicas: {{ .Values.mailer.replicaCount }}
+  selector:
+    matchLabels:
+      app: {{ .Values.mailer.name }}
+      release: {{ .Release.Name }}
+  template:
+    metadata:
+      labels:
+        app: {{ .Values.mailer.name }}
+        release: {{ .Release.Name }}
+      annotations:
+        checksum/config: {{ include (print $.Template.BasePath "/configmap.yaml") . | sha256sum }}
+    spec:
+      containers:
+        - name: {{ .Values.mailer.name }}
+          image: "{{ .Values.global.imageRegistry }}/{{ .Values.mailer.image.repository }}:{{ .Values.mailer.image.tag }}"
+          imagePullPolicy: {{ .Values.mailer.image.pullPolicy }}
+          ports:
+            - name: http
+              containerPort: {{ .Values.mailer.service.targetPort }}
+              protocol: TCP
+          env:
+            - name: OPENAI_API_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: openai-secret
+                  key: api-key
+            - name: OPENAI_MODEL
+              value: {{ .Values.env.openai.model | quote }}
+            - name: GMAIL_MCP_SERVER_URL
+              value: {{ .Values.mailer.env.GMAIL_MCP_SERVER_URL | quote }}
+            - name: GMAIL_CREDENTIALS_PATH
+              value: "/etc/gmail/credentials.json"
+            - name: GMAIL_TOKEN_PATH
+              value: "/etc/gmail/token.json"
+            - name: DEFAULT_EMAIL_RECIPIENT
+              value: {{ .Values.mailer.env.DEFAULT_EMAIL_RECIPIENT | quote }}
+            - name: LOG_LEVEL
+              value: {{ .Values.env.logging.level | quote }}
+            - name: LOG_FORMAT
+              value: {{ .Values.env.logging.format | quote }}
+            - name: A2A_TIMEOUT
+              value: {{ .Values.env.a2a.timeout | quote }}
+            - name: A2A_RETRY_ATTEMPTS
+              value: {{ .Values.env.a2a.retryAttempts | quote }}
+            - name: A2A_DISCOVERY_ENABLED
+              value: {{ .Values.env.a2a.discoveryEnabled | quote }}
+          volumeMounts:
+            - name: gmail-credentials
+              mountPath: /etc/gmail
+              readOnly: true
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: http
+            initialDelaySeconds: 30
+            periodSeconds: 10
+          readinessProbe:
+            httpGet:
+              path: /.well-known/agent.json
+              port: http
+            initialDelaySeconds: 5
+            periodSeconds: 5
+          resources:
+            {{- toYaml .Values.mailer.resources | nindent 12 }}
+      volumes:
+        - name: gmail-credentials
+          secret:
+            secretName: gmail-secret
+      restartPolicy: Always
+{{- end }}

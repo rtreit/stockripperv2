@@ -1,0 +1,36 @@
+{{- if and .Values.planner.enabled .Values.planner.ingress.enabled }}
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: {{ .Values.planner.name }}
+  namespace: {{ .Values.global.namespace }}
+  labels:
+    app: {{ .Values.planner.name }}
+    component: agent
+    chart: {{ include "stockripperv2.chart" . }}
+    release: {{ .Release.Name }}
+    heritage: {{ .Release.Service }}
+  {{- with .Values.planner.ingress.annotations }}
+  annotations:
+    {{- toYaml . | nindent 4 }}
+  {{- end }}
+spec:
+  {{- if .Values.planner.ingress.className }}
+  ingressClassName: {{ .Values.planner.ingress.className }}
+  {{- end }}
+  rules:
+    {{- range .Values.planner.ingress.hosts }}
+    - host: {{ .host | quote }}
+      http:
+        paths:
+          {{- range .paths }}
+          - path: {{ .path }}
+            pathType: {{ .pathType }}
+            backend:
+              service:
+                name: {{ $.Values.planner.name }}
+                port:
+                  number: {{ $.Values.planner.service.port }}
+          {{- end }}
+    {{- end }}
+{{- end }}

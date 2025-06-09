@@ -1,0 +1,23 @@
+{{- if .Values.mcpServers.alpaca.enabled }}
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ .Values.mcpServers.alpaca.name }}
+  namespace: {{ .Values.global.namespace | default .Release.Namespace }}
+  labels:
+    {{- include "stockripperv2.labels" . | nindent 4 }}
+    app.kubernetes.io/component: mcp-server
+    app.kubernetes.io/name: alpaca-mcp
+spec:
+  type: {{ .Values.mcpServers.alpaca.service.type }}
+  ports:
+    - port: {{ .Values.mcpServers.alpaca.service.port }}
+      targetPort: {{ .Values.mcpServers.alpaca.service.targetPort }}
+      protocol: TCP
+      name: http
+  selector:
+    app.kubernetes.io/name: alpaca-mcp
+    app.kubernetes.io/instance: {{ .Release.Name }}
+{{- end }}
+
+# Contains AI-generated edits.

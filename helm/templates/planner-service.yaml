@@ -1,0 +1,23 @@
+{{- if .Values.planner.enabled }}
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ .Values.planner.name }}
+  namespace: {{ .Values.global.namespace }}
+  labels:
+    app: {{ .Values.planner.name }}
+    component: agent
+    chart: {{ include "stockripperv2.chart" . }}
+    release: {{ .Release.Name }}
+    heritage: {{ .Release.Service }}
+spec:
+  type: {{ .Values.planner.service.type }}
+  ports:
+    - port: {{ .Values.planner.service.port }}
+      targetPort: {{ .Values.planner.service.targetPort }}
+      protocol: TCP
+      name: http
+  selector:
+    app: {{ .Values.planner.name }}
+    release: {{ .Release.Name }}
+{{- end }}
