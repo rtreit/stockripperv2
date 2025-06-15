@@ -7,13 +7,18 @@ import json
 from typing import Any, Dict, List, Optional
 
 from langchain_openai import ChatOpenAI
+from langchain_anthropic import ChatAnthropic
 from langgraph.graph import StateGraph, START, END
 from langgraph.graph.message import add_messages
 from pydantic import BaseModel, Field
 from typing_extensions import Annotated, TypedDict
+import structlog
 
 from agents.base import BaseA2AAgent
-from config import settings, logger
+from config import get_settings, setup_logging
+
+
+logger = structlog.get_logger(__name__)
 
 
 class EmailNotification(BaseModel):
@@ -39,32 +44,73 @@ class MailerAgent(BaseA2AAgent):
     """A2A-compliant Mailer agent for sending email notifications."""
 
     def __init__(self):
-        super().__init__(
-            agent_name="mailer",
-            agent_description="Sends email notifications for trading plans and alerts",
-            port=8003,
-            mcp_servers=[
-                {
-                    "name": "gmail",
-                    "url": settings.GMAIL_MCP_SERVER_URL,
-                    "auth": {
-                        "type": "oauth2",
-                        "credentials_path": settings.GMAIL_CREDENTIALS_PATH,
-                        "token_path": settings.GMAIL_TOKEN_PATH,
-                    }
+        settings = get_settings()
+        
+        # MCP servers for email services (stdio configuration)
+        mcp_servers = {
+            "gmail": {
+                "command": "npx",
+                "args": ["@modelcontextprotocol/server-gmail"],
+                "env": {
+                    "GMAIL_CREDENTIALS_PATH": settings.gmail_credentials_path,
+                    "GMAIL_TOKEN_PATH": settings.gmail_token_path
                 }
-            ]
+            }
+        }
+        
+        capabilities = {
+            "email_notifications": True,
+            "trade_alerts": True,
+            "notification_templates": True,
+            "google_a2a_compatible": True
+        }
+        
+        super().__init__(
+            name="Mailer",
+            description="Email notification agent for trading alerts and reports",
+            url=settings.mailer_url,
+            version="1.0.0",
+            mcp_servers=mcp_servers,
+            capabilities=capabilities
         )
         
-        # Initialize LLM for email composition
-        self.llm = ChatOpenAI(
-            model=settings.OPENAI_MODEL,
-            api_key=settings.OPENAI_API_KEY,
-            temperature=0.3
-        )
-        
-        # Build LangGraph workflow
-        self.workflow = self._build_workflow()
+        self.settings = settings
+        self.llm = self._setup_llm()
+        self.workflow = None
+
+    def _setup_llm(self) -> Any:
+        """Setup the LLM (OpenAI or Anthropic)"""
+        if self.settings.openai_api_key:
+            return ChatOpenAI(
+                model="gpt-4",
+                temperature=0.3,
+                api_key=self.settings.openai_api_key
+            )
+        elif self.settings.anthropic_api_key:
+            return ChatAnthropic(
+                model="claude-3-opus-20240229",
+                temperature=0.3,
+                api_key=self.settings.anthropic_api_key
+            )
+        else:
+            raise ValueError("No LLM API key configured")
+    
+    def get_agent_card(self) -> Dict[str, Any]:
+        """Return detailed agent card for discovery"""
+        return {
+            "name": self.agent_card.name,
+            "description": self.agent_card.description,
+            "version": self.agent_card.version,
+            "url": self.agent_card.url,
+            "capabilities": self.agent_card.capabilities,
+            "endpoints": {
+                "health": f"{self.agent_card.url}/health",
+                "discovery": f"{self.agent_card.url}/.well-known/agent.json",
+                "send_email": f"{self.agent_card.url}/send_email"
+            },
+            "mcp_servers": list(self.mcp_servers_config.keys()),
+            "status": "active"
+        }
 
     def _build_workflow(self) -> StateGraph:
         """Build the LangGraph workflow for email processing."""
@@ -105,18 +151,17 @@ class MailerAgent(BaseA2AAgent):
                 lines = email_content.split('\n')
                 subject = "Trade Plan Notification"
                 body = email_content
-                
-                # Look for subject line in response
+                  # Look for subject line in response
                 for line in lines:
                     if line.strip().lower().startswith("subject:"):
                         subject = line.split(":", 1)[1].strip()
                         break
                 
                 email_notification = EmailNotification(
-                    to=[settings.DEFAULT_EMAIL_RECIPIENT],
+                    to=[self.settings.default_email_recipient],
                     subject=subject,
                     body=body,
-                    cc=settings.EMAIL_CC_RECIPIENTS if settings.EMAIL_CC_RECIPIENTS else None
+                    cc=self.settings.email_cc_recipients if self.settings.email_cc_recipients else None
                 )
                 
                 return {

@@ -1,13 +1,18 @@
-# Mailer Agent Dockerfile  
+# Mailer Agent Dockerfile
 FROM python:3.12-slim
 
 WORKDIR /app
 
-# Install system dependencies
+# Install system dependencies including Node.js for MCP servers
 RUN apt-get update && apt-get install -y \
     gcc \
     curl \
+    nodejs \
+    npm \
     && rm -rf /var/lib/apt/lists/*
+
+# Install MCP servers via npm (Gmail server for this agent)
+RUN npm install -g @modelcontextprotocol/server-gmail
 
 # Copy requirements and install Python dependencies
 COPY requirements.txt .

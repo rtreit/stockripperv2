@@ -26,12 +26,16 @@ class PlannerAgent(BaseA2AAgent):
     
     def __init__(self):
         settings = get_settings()
-        
-        # MCP servers for trading tools
+          # MCP servers for trading tools (stdio configuration)
         mcp_servers = {
             "alpaca": {
-                "url": settings.alpaca_mcp_url,
-                "transport": "streamable_http"
+                "command": "npx",
+                "args": ["@modelcontextprotocol/server-alpaca"],
+                "env": {
+                    "ALPACA_API_KEY": settings.alpaca_api_key,
+                    "ALPACA_SECRET_KEY": settings.alpaca_secret_key,
+                    "ALPACA_BASE_URL": settings.alpaca_base_url or "https://paper-api.alpaca.markets"
+                }
             }
         }
         
@@ -72,6 +76,23 @@ class PlannerAgent(BaseA2AAgent):
             )
         else:
             raise ValueError("No LLM API key configured")
+    
+    def get_agent_card(self) -> Dict[str, Any]:
+        """Return detailed agent card for discovery"""
+        return {
+            "name": self.agent_card.name,
+            "description": self.agent_card.description,
+            "version": self.agent_card.version,
+            "url": self.agent_card.url,
+            "capabilities": self.agent_card.capabilities,
+            "endpoints": {
+                "health": f"{self.agent_card.url}/health",
+                "discovery": f"{self.agent_card.url}/.well-known/agent.json",
+                "plan": f"{self.agent_card.url}/plan"
+            },
+            "mcp_servers": list(self.mcp_servers_config.keys()),
+            "status": "active"
+        }
     
     async def setup(self) -> None:
         """Setup the agent and build the LangGraph"""

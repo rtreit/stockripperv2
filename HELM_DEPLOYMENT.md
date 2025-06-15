@@ -1,6 +1,6 @@
 # Helm Deployment Guide for StockRipper v2
 
-This guide explains how to deploy the A2A-compliant StockRipper agents using Helm instead of Docker Compose.
+This guide explains how to deploy the A2A-compliant StockRipper agents using Helm. Each agent container includes embedded MCP servers running via stdio.
 
 ## Prerequisites
 
@@ -11,23 +11,18 @@ This guide explains how to deploy the A2A-compliant StockRipper agents using Hel
 
 ## Quick Start
 
-### 1. Build and Push Images
+### 1. Build and Push Agent Images (with Embedded MCP Servers)
 
 ```powershell
-# Build all agent images
+# Build all agent images (each includes Node.js and MCP servers)
 docker build -t stockripper/market-analyst:1.0.0 -f agents/market_analyst/Dockerfile .
 docker build -t stockripper/planner:1.0.0 -f agents/planner/Dockerfile .
 docker build -t stockripper/mailer:1.0.0 -f agents/mailer/Dockerfile .
-
-# Build MCP server images (you'll need to create these)
-docker build -t stockripper/alpaca-mcp:1.0.0 -f mcp-servers/alpaca/Dockerfile .
-docker build -t stockripper/gmail-mcp:1.0.0 -f mcp-servers/gmail/Dockerfile .
 
 # Push to your registry
 docker push ghcr.io/yourusername/stockripper/market-analyst:1.0.0
 docker push ghcr.io/yourusername/stockripper/planner:1.0.0
 docker push ghcr.io/yourusername/stockripper/mailer:1.0.0
-docker push ghcr.io/yourusername/stockripper/alpaca-mcp:1.0.0
 docker push ghcr.io/yourusername/stockripper/gmail-mcp:1.0.0
 ```
 

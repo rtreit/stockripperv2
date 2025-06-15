@@ -4,18 +4,21 @@ A modern multi-agent trading system built with A2A (Agent-to-Agent) protocol and
 
 ## 🏗️ Architecture
 
-### Agents
-- **Market Analyst** (Port 8001): Analyzes market data using Alpaca MCP server
-- **Planner** (Port 8002): Creates trading plans based on market analysis  
-- **Mailer** (Port 8003): Sends notifications via Gmail MCP server
+### Agents (with Embedded MCP Servers)
+- **Market Analyst** (Port 8001): Analyzes market data using embedded Alpaca MCP server (stdio)
+- **Planner** (Port 8002): Creates trading plans based on market analysis with embedded Alpaca MCP server (stdio)
+- **Mailer** (Port 8003): Sends notifications via embedded Gmail MCP server (stdio)
 
-### MCP Servers
-- **Alpaca MCP** (Port 9001): Provides market data and trading capabilities
-- **Gmail MCP** (Port 9002): Handles email sending functionality
+### MCP Integration (stdio)
+Each agent container includes:
+- **Node.js/npm**: Required for running MCP servers
+- **Alpaca MCP Server**: Runs as subprocess via `npx @modelcontextprotocol/server-alpaca`
+- **Gmail MCP Server**: Runs as subprocess via `npx @modelcontextprotocol/server-gmail`
+- **stdio Communication**: MCP servers communicate with agents via standard input/output
 
 ### Communication
 - **A2A Protocol**: HTTP-based agent-to-agent communication with discovery
-- **MCP Integration**: Tool access through standardized protocol
+- **MCP Integration**: Tool access through stdio subprocess communication
 - **LangGraph**: State management and workflow orchestration
 - **FastAPI**: RESTful endpoints and health checks
 

@@ -26,12 +26,16 @@ class MarketAnalystAgent(BaseA2AAgent):
     
     def __init__(self):
         settings = get_settings()
-        
-        # MCP servers for market data and tools
+          # MCP servers for market data and tools (stdio configuration)
         mcp_servers = {
             "alpaca": {
-                "url": settings.alpaca_mcp_url,
-                "transport": "streamable_http"
+                "command": "npx",
+                "args": ["@modelcontextprotocol/server-alpaca"],
+                "env": {
+                    "ALPACA_API_KEY": settings.alpaca_api_key,
+                    "ALPACA_SECRET_KEY": settings.alpaca_secret_key,
+                    "ALPACA_BASE_URL": settings.alpaca_base_url or "https://paper-api.alpaca.markets"
+                }
             }
         }
         
@@ -57,8 +61,7 @@ class MarketAnalystAgent(BaseA2AAgent):
     
     def _setup_llm(self) -> Any:
         """Setup the LLM (OpenAI or Anthropic)"""
-        if self.settings.openai_api_key:
-            return ChatOpenAI(
+        if self.settings.openai_api_key:            return ChatOpenAI(
                 model="gpt-4",
                 temperature=0.1,
                 api_key=self.settings.openai_api_key
@@ -71,6 +74,23 @@ class MarketAnalystAgent(BaseA2AAgent):
             )
         else:
             raise ValueError("No LLM API key configured")
+    
+    def get_agent_card(self) -> Dict[str, Any]:
+        """Return detailed agent card for discovery"""
+        return {
+            "name": self.agent_card.name,
+            "description": self.agent_card.description,
+            "version": self.agent_card.version,
+            "url": self.agent_card.url,
+            "capabilities": self.agent_card.capabilities,
+            "endpoints": {
+                "health": f"{self.agent_card.url}/health",
+                "discovery": f"{self.agent_card.url}/.well-known/agent.json",
+                "analyze": f"{self.agent_card.url}/analyze"
+            },
+            "mcp_servers": list(self.mcp_servers_config.keys()),
+            "status": "active"
+        }
     
     async def setup(self) -> None:
         """Setup the agent and build the LangGraph"""
@@ -95,9 +115,12 @@ class MarketAnalystAgent(BaseA2AAgent):
             Provide specific, actionable insights and recommendations.
             """)
             
+            # Get available MCP tools from Alpaca server
+            alpaca_tools = asyncio.run(self.get_mcp_tools("alpaca"))
+            
             # Bind MCP tools if available
-            if self.mcp_tools:
-                llm_with_tools = self.llm.bind_tools(self.mcp_tools)
+            if alpaca_tools:
+                llm_with_tools = self.llm.bind_tools(alpaca_tools)
             else:
                 llm_with_tools = self.llm
             

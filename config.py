@@ -16,32 +16,28 @@ class Settings(BaseSettings):
     openai_api_key: Optional[str] = Field(default=None, description="OpenAI API Key")
     openai_model: str = Field(default="gpt-4o-mini", description="OpenAI Model")
     anthropic_api_key: Optional[str] = Field(default=None, description="Anthropic API Key")
-    
-    # Agent URLs
+      # Agent URLs
     market_analyst_url: str = Field(default="http://localhost:8001", description="Market Analyst URL")
     planner_url: str = Field(default="http://localhost:8002", description="Planner URL") 
     mailer_url: str = Field(default="http://localhost:8003", description="Mailer URL")
-      # Registry
+    
+    # Registry
     a2a_registry_url: str = Field(default="http://localhost:8000", description="A2A Registry URL")
     
-    # MCP Servers
-    alpaca_mcp_url: str = Field(default="http://localhost:9001", description="Alpaca MCP URL")
-    gmail_mcp_server_url: str = Field(default="http://localhost:9002", description="Gmail MCP Server URL")
-    gmail_mcp_url: str = Field(default="http://localhost:9002", description="Gmail MCP URL")  # Backward compatibility
-    
-    # Alpaca Trading
+    # Alpaca Trading (for stdio MCP servers)
     alpaca_api_key: Optional[str] = Field(default=None, description="Alpaca API Key")
     alpaca_secret_key: Optional[str] = Field(default=None, description="Alpaca Secret Key")
     alpaca_base_url: str = Field(default="https://paper-api.alpaca.markets", description="Alpaca Base URL")
     
-    # Gmail
+    # Gmail (for stdio MCP servers)
     gmail_client_id: Optional[str] = Field(default=None, description="Gmail Client ID")
     gmail_client_secret: Optional[str] = Field(default=None, description="Gmail Client Secret")
     gmail_credentials_path: str = Field(default="./credentials/gmail_credentials.json", description="Gmail Credentials Path")
     gmail_token_path: str = Field(default="./credentials/gmail_token.json", description="Gmail Token Path")
     default_email_recipient: str = Field(default="admin@stockripper.com", description="Default Email Recipient")
     email_cc_recipients: Optional[list] = Field(default=None, description="Email CC Recipients")
-      # Logging
+    
+    # Logging
     log_level: str = Field(default="INFO", description="Log Level")
     log_format: str = Field(default="json", description="Log Format")
     x_correlation_id_header: str = Field(default="X-Correlation-ID", description="X-Correlation-ID Header")
