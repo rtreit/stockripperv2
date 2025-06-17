@@ -1,24 +1,42 @@
-# StockRipper v2
+# StockRipper v2 🚀
 
-A modern multi-agent trading system built with A2A (Agent-to-Agent) protocol and MCP (Model Context Protocol) integration. The system consists of three specialized agents that communicate over HTTP using Google's A2A protocol and access external services through MCP servers.
+Advanced AI-powered trading system with distributed agent architecture using MCP (Model Context Protocol) for secure, scalable financial automation.
 
 ## 🏗️ Architecture
 
-### Agents (with Embedded MCP Servers)
-- **Market Analyst** (Port 8001): Analyzes market data using embedded Alpaca MCP server (stdio)
-- **Planner** (Port 8002): Creates trading plans based on market analysis with embedded Alpaca MCP server (stdio)
-- **Mailer** (Port 8003): Sends notifications via embedded Gmail MCP server (stdio)
+StockRipper v2 uses a distributed agent system with Python-based MCP servers for external integrations:
 
-### MCP Integration (stdio)
-Each agent container includes:
-- **Node.js/npm**: Required for running MCP servers
-- **Alpaca MCP Server**: Runs as subprocess via `npx @modelcontextprotocol/server-alpaca`
-- **Gmail MCP Server**: Runs as subprocess via `npx @modelcontextprotocol/server-gmail`
-- **stdio Communication**: MCP servers communicate with agents via standard input/output
+```
+┌─────────────────┐    ┌─────────────────┐    ┌─────────────────┐
+│  Market Analyst │    │     Planner     │    │     Mailer      │
+│   (Port 8001)   │    │   (Port 8002)   │    │   (Port 8003)   │
+│                 │    │                 │    │                 │
+│  Uses: Alpaca   │    │  Uses: Alpaca   │    │  Uses: Gmail    │
+│  MCP Server     │    │  MCP Server     │    │  MCP Server     │
+└─────────────────┘    └─────────────────┘    └─────────────────┘
+         │                       │                       │
+         └───────────────────────┼───────────────────────┘
+                                 │
+                    ┌─────────────────┐
+                    │  A2A Registry   │
+                    │  (Port 8000)    │
+                    └─────────────────┘
+```
 
-### Communication
+### 🎯 Agents (with Python MCP Servers)
+- **Market Analyst** (Port 8001): Analyzes market data using Python Alpaca MCP server (stdio)
+- **Planner** (Port 8002): Creates trading plans with Python Alpaca MCP server (stdio)
+- **Mailer** (Port 8003): Sends notifications via Python Gmail MCP server (stdio)
+
+### 🔗 MCP Integration (stdio)
+Each agent includes Python-based MCP servers:
+- **Alpaca MCP Server**: `./mcp_servers/alpaca/alpaca_mcp_server.py`
+- **Gmail MCP Server**: `./mcp_servers/gmail/main.py`
+- **stdio Communication**: Secure subprocess communication via stdin/stdout
+
+### 📡 Communication
 - **A2A Protocol**: HTTP-based agent-to-agent communication with discovery
-- **MCP Integration**: Tool access through stdio subprocess communication
+- **MCP Integration**: Tool access through secure stdio subprocess communication
 - **LangGraph**: State management and workflow orchestration
 - **FastAPI**: RESTful endpoints and health checks
 

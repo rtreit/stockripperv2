@@ -45,13 +45,13 @@ class MailerAgent(BaseA2AAgent):
 
     def __init__(self):
         settings = get_settings()
-        
-        # MCP servers for email services (stdio configuration)
+          # MCP servers for email services (stdio configuration)
         mcp_servers = {
             "gmail": {
-                "command": "npx",
-                "args": ["@modelcontextprotocol/server-gmail"],
+                "command": "python",
+                "args": ["./mcp_servers/gmail/main.py", "--transport", "stdio"],
                 "env": {
+                    "GOOGLE_APPLICATION_CREDENTIALS": settings.gmail_credentials_path,
                     "GMAIL_CREDENTIALS_PATH": settings.gmail_credentials_path,
                     "GMAIL_TOKEN_PATH": settings.gmail_token_path
                 }
@@ -256,8 +256,7 @@ class MailerAgent(BaseA2AAgent):
             "trade_plan": trade_plan,
             "email_notification": None,
             "email_sent": False,
-            "error": None
-        }
+            "error": None        }
         
         final_state = await self.workflow.ainvoke(initial_state)
         
@@ -265,22 +264,23 @@ class MailerAgent(BaseA2AAgent):
             return {
                 "success": False,
                 "error": final_state["error"],
-                "agent": self.agent_name
+                "agent": self.agent_card.name
             }
         
         return {
             "success": True,
             "email_sent": final_state.get("email_sent", False),
             "recipients": final_state["email_notification"].to if final_state.get("email_notification") else [],
-            "agent": self.agent_name
+            "agent": self.agent_card.name
         }
 
     def get_agent_card(self) -> Dict[str, Any]:
         """Return agent card for A2A discovery."""
         return {
-            "name": self.agent_name,
-            "description": self.agent_description,
-            "version": "1.0.0",
+            "name": self.agent_card.name,
+            "description": self.agent_card.description,
+            "version": self.agent_card.version,
+            "url": self.agent_card.url,
             "capabilities": [
                 "send_email_notifications",
                 "compose_trade_alerts",
@@ -302,6 +302,29 @@ class MailerAgent(BaseA2AAgent):
             "mcp_servers": ["gmail"],
             "contact": "mailer@stockripper.com"
         }
+
+    async def process_task(self, task) -> Any:
+        """Process an A2A task for the mailer agent"""
+        try:
+            # Extract task content
+            task_content = task.get("content", {}) if hasattr(task, 'get') else getattr(task, 'content', {})
+            
+            if task_content.get("type") == "trade_notification":
+                trade_plan = task_content.get("trade_plan")
+                result = await self.handle_trade_plan_notification(trade_plan)
+                
+                task.status = "completed"
+                task.result = result
+                return task
+            else:
+                task.status = "failed"
+                task.error = "Unknown task type"
+                return task
+                
+        except Exception as e:
+            task.status = "failed"
+            task.error = str(e)
+            return task
 
     async def setup_routes(self):
         """Setup FastAPI routes for the Mailer agent."""

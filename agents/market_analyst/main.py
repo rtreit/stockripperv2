@@ -25,16 +25,16 @@ class MarketAnalystAgent(BaseA2AAgent):
     """A2A-compliant Market Analyst Agent with LangGraph"""
     
     def __init__(self):
-        settings = get_settings()
-          # MCP servers for market data and tools (stdio configuration)
+        settings = get_settings()        # MCP servers for market data and tools (stdio configuration)
         mcp_servers = {
             "alpaca": {
-                "command": "npx",
-                "args": ["@modelcontextprotocol/server-alpaca"],
+                "command": "python",
+                "args": ["./mcp_servers/alpaca/alpaca_mcp_server.py"],
                 "env": {
-                    "ALPACA_API_KEY": settings.alpaca_api_key,
-                    "ALPACA_SECRET_KEY": settings.alpaca_secret_key,
-                    "ALPACA_BASE_URL": settings.alpaca_base_url or "https://paper-api.alpaca.markets"
+                    "ALPACA_API_KEY": settings.alpaca_api_key or "",
+                    "ALPACA_SECRET_KEY": settings.alpaca_secret_key or "",
+                    "ALPACA_BASE_URL": settings.alpaca_base_url,
+                    "PAPER": "True"  # Use paper trading by default
                 }
             }
         }
