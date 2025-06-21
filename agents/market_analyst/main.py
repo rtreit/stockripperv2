@@ -25,17 +25,15 @@ class MarketAnalystAgent(BaseA2AAgent):
     """A2A-compliant Market Analyst Agent with LangGraph"""
     
     def __init__(self):
-        settings = get_settings()        # MCP servers for market data and tools (stdio configuration)
+        settings = get_settings()        # MCP servers configuration (HTTP endpoints to running servers)
         mcp_servers = {
             "alpaca": {
-                "command": "python",
-                "args": ["./mcp_servers/alpaca/alpaca_mcp_server.py"],
-                "env": {
-                    "ALPACA_API_KEY": settings.alpaca_api_key or "",
-                    "ALPACA_SECRET_KEY": settings.alpaca_secret_key or "",
-                    "ALPACA_BASE_URL": settings.alpaca_base_url,
-                    "PAPER": "True"  # Use paper trading by default
-                }
+                "url": "http://localhost:8000",
+                "type": "http"
+            },
+            "gmail": {
+                "url": "http://localhost:8004", 
+                "type": "http"
             }
         }
         
@@ -115,32 +113,15 @@ class MarketAnalystAgent(BaseA2AAgent):
             Provide specific, actionable insights and recommendations.
             """)
             
-            # Get available MCP tools from Alpaca server
-            alpaca_tools = asyncio.run(self.get_mcp_tools("alpaca"))
-            
-            # Bind MCP tools if available
-            if alpaca_tools:
-                llm_with_tools = self.llm.bind_tools(alpaca_tools)
-            else:
-                llm_with_tools = self.llm
-            
-            response = llm_with_tools.invoke([system_msg] + messages)
+            # For now, use LLM without tools binding due to complexity of MCP integration
+            # We can call MCP tools explicitly in the analysis if needed
+            response = self.llm.invoke([system_msg] + messages)
             return {"messages": [response]}
         
-        # Build the graph
+        # Build the graph - simplified version without tool nodes for now
         builder = StateGraph(MessagesState)
         builder.add_node("analyze", analyze_stock)
-        
-        if self.mcp_tools:
-            builder.add_node("tools", ToolNode(self.mcp_tools))
-            builder.add_edge(START, "analyze")
-            builder.add_conditional_edges(
-                "analyze",
-                tools_condition,
-            )
-            builder.add_edge("tools", "analyze")
-        else:
-            builder.add_edge(START, "analyze")
+        builder.add_edge(START, "analyze")
         
         self.analysis_graph = builder.compile()
     
@@ -153,11 +134,31 @@ class MarketAnalystAgent(BaseA2AAgent):
         """Analyze a specific stock ticker"""
         try:
             # Use MCP tools for data if available
-            if self.mcp_tools:
-                stock_data = await self.call_mcp_tool("get_stock_data", symbol=ticker)
-                analysis_context = f"Analyzing {ticker} with data: {stock_data}"
-            else:
-                analysis_context = f"Analyzing {ticker} (using general knowledge)"
+            analysis_context = f"Analyzing {ticker}"
+            
+            if "alpaca" in self.mcp_sessions and self.mcp_sessions["alpaca"]:
+                # Try to get stock data from Alpaca MCP server
+                try:
+                    # Get available tools first
+                    alpaca_tools = await self.get_mcp_tools("alpaca")
+                    self.logger.info(f"Available Alpaca tools: {[t.name for t in alpaca_tools]}")
+                    
+                    # Try to find a suitable tool for getting stock data
+                    data_tool = None
+                    for tool in alpaca_tools:
+                        if any(keyword in tool.name.lower() for keyword in ['quote', 'price', 'stock', 'bars']):
+                            data_tool = tool
+                            break
+                    
+                    if data_tool:
+                        self.logger.info(f"Using tool: {data_tool.name}")
+                        stock_data = await self.call_mcp_tool("alpaca", data_tool.name, symbol=ticker)
+                        analysis_context = f"Analyzing {ticker} with data: {stock_data}"
+                    else:
+                        self.logger.info("No suitable stock data tool found, using general analysis")
+                        
+                except Exception as e:
+                    self.logger.warning(f"Error calling MCP tool: {e}")
             
             # Run LangGraph analysis
             if self.analysis_graph:
@@ -186,11 +187,26 @@ class MarketAnalystAgent(BaseA2AAgent):
         """Get market overview"""
         try:
             # Use MCP tools for market data if available
-            if self.mcp_tools:
-                market_data = await self.call_mcp_tool("get_market_overview")
-                analysis_prompt = f"Provide market analysis based on: {market_data}"
-            else:
-                analysis_prompt = "Provide current market overview and trends analysis"
+            analysis_prompt = "Provide current market overview and trends analysis"
+            
+            if "alpaca" in self.mcp_sessions and self.mcp_sessions["alpaca"]:
+                try:
+                    # Try to get market data from Alpaca
+                    alpaca_tools = await self.get_mcp_tools("alpaca")
+                    
+                    # Look for market overview tools
+                    market_tool = None
+                    for tool in alpaca_tools:
+                        if any(keyword in tool.name.lower() for keyword in ['market', 'overview', 'snapshot']):
+                            market_tool = tool
+                            break
+                    
+                    if market_tool:
+                        market_data = await self.call_mcp_tool("alpaca", market_tool.name)
+                        analysis_prompt = f"Provide market analysis based on: {market_data}"
+                        
+                except Exception as e:
+                    self.logger.warning(f"Error getting market data from MCP: {e}")
             
             response = await self.llm.ainvoke([
                 SystemMessage(content="You are a market analyst providing daily market insights."),
@@ -201,7 +217,7 @@ class MarketAnalystAgent(BaseA2AAgent):
         except Exception as e:
             self.logger.error(f"Error getting market overview: {e}")
             return f"Error getting market overview: {str(e)}"
-    
+
     async def process_task(self, task: Task) -> Task:
         """Process incoming A2A task"""
         try:
@@ -261,6 +277,37 @@ class MarketAnalystAgent(BaseA2AAgent):
             )
         
         return task
+
+    async def setup_routes(self) -> None:
+        """Setup additional FastAPI routes for testing"""
+        
+        @self.app.post("/analyze")
+        async def analyze_endpoint(request: Dict[str, Any]):
+            """Analyze endpoint for HTTP testing"""
+            ticker = request.get("ticker", "AAPL")
+            try:
+                result = await self.analyze_stock_skill(ticker)
+                return {"status": "success", "analysis": result}
+            except Exception as e:
+                return {"status": "error", "message": str(e)}
+        
+        @self.app.get("/market-overview")
+        async def market_overview_endpoint():
+            """Market overview endpoint for HTTP testing"""
+            try:
+                result = await self.market_overview_skill()
+                return {"status": "success", "overview": result}
+            except Exception as e:
+                return {"status": "error", "message": str(e)}
+        
+        @self.app.get("/mcp-status")
+        async def mcp_status_endpoint():
+            """Check MCP server connection status"""
+            return {
+                "mcp_sessions": {k: {"connected": bool(v and v.get("connected", False))} for k, v in self.mcp_sessions.items()},
+                "mcp_tools": {k: len(v) if v else 0 for k, v in self.mcp_tools.items()},
+                "available_servers": list(self.mcp_sessions.keys())
+            }
 
 
 async def main():

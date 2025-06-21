@@ -28,13 +28,13 @@ class Settings(BaseSettings):
     alpaca_secret_key: Optional[str] = Field(default=None, description="Alpaca Secret Key")
     alpaca_base_url: str = Field(default="https://paper-api.alpaca.markets", description="Alpaca Base URL")
     paper: Optional[str] = Field(default="True", description="Alpaca Paper Trading Mode")
-    
-    # Gmail (for stdio MCP servers)
+      # Gmail (for stdio MCP servers)
     gmail_client_id: Optional[str] = Field(default=None, description="Gmail Client ID")
     gmail_client_secret: Optional[str] = Field(default=None, description="Gmail Client Secret")
     gmail_credentials_path: str = Field(default="./credentials/gmail_credentials.json", description="Gmail Credentials Path")
     gmail_token_path: str = Field(default="./credentials/gmail_token.json", description="Gmail Token Path")
     google_application_credentials: Optional[str] = Field(default=None, description="Google Application Credentials Path")
+    workspace_mcp_port: int = Field(default=8004, description="Workspace MCP Server Port")
     default_email_recipient: str = Field(default="admin@stockripper.com", description="Default Email Recipient")
     email_cc_recipients: Optional[str] = Field(default=None, description="Email CC Recipients (comma-separated)")
     

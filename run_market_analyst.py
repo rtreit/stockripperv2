@@ -18,7 +18,7 @@ from agents.market_analyst.main import MarketAnalystAgent
 async def main():
     """Main function to run the Market Analyst agent."""
     
-    print("🚀 Starting Market Analyst Agent")
+    print("Starting Market Analyst Agent")
     print("=" * 40)
     
     try:

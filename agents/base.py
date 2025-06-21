@@ -13,8 +13,9 @@ from fastapi import FastAPI
 import uvicorn
 from python_a2a import A2AServer, skill, agent, AgentCard, A2AClient
 from python_a2a.models import Task, TaskStatus, TaskState, Message, MessageRole
-from mcp import ClientSession, StdioServerParameters
+from mcp import StdioServerParameters
 from mcp.client.stdio import stdio_client
+from mcp.client.session import ClientSession
 import structlog
 
 from config import get_settings
@@ -49,12 +50,10 @@ class BaseA2AAgent(A2AServer, ABC):
             capabilities=capabilities or {}
         )
         
-        super().__init__(agent_card=agent_card)
-        
-        # MCP configuration and processes
+        super().__init__(agent_card=agent_card)        # MCP configuration and sessions
         self.mcp_servers_config = mcp_servers or {}
-        self.mcp_processes = {}
         self.mcp_sessions = {}
+        self.mcp_client_managers = {}  # Store async context managers
         self.mcp_tools = {}
         
         # A2A clients for agent communication
@@ -87,6 +86,21 @@ class BaseA2AAgent(A2AServer, ABC):
         async def health_check():
             """Health check endpoint"""
             return {"status": "healthy", "agent": self.agent_card.name}
+        
+        @self.app.get("/mcp-status")
+        async def mcp_status():
+            """MCP servers status endpoint"""
+            status = {}
+            for server_name, session in self.mcp_sessions.items():
+                if hasattr(session, 'connected') and session.connected:
+                    tools_count = len(self.mcp_tools.get(server_name, []))
+                    status[server_name] = {
+                        "connected": True,
+                        "tools_count": tools_count
+                    }
+                else:
+                    status[server_name] = {"connected": False}
+            return {"mcp_servers": status}
     
     @abstractmethod
     def get_agent_card(self) -> Dict[str, Any]:
@@ -97,87 +111,85 @@ class BaseA2AAgent(A2AServer, ABC):
         pass
     
     async def setup(self) -> None:
-        """Setup the agent (initialize MCP servers, etc.)"""
-        # Start MCP servers as subprocesses
+        """Setup the agent (initialize MCP servers, etc.)"""        # Connect to external MCP servers
         await self._start_mcp_servers()
         
         # Setup agent clients for cross-agent communication
         self._setup_agent_clients()
-    
     async def _start_mcp_servers(self) -> None:
-        """Start MCP servers as stdio subprocesses"""
+        """Connect to external MCP servers (parallel for faster startup)"""
+        self.logger.info("Connecting to external MCP servers...")
+        
+        # Start all MCP server connections in parallel
+        tasks = []
         for server_name, config in self.mcp_servers_config.items():
-            try:
-                await self._start_mcp_server(server_name, config)
-                self.logger.info(f"Started MCP server: {server_name}")
-            except Exception as e:
-                self.logger.error(f"Failed to start MCP server {server_name}: {e}")
+            task = asyncio.create_task(
+                self._connect_to_mcp_server(server_name, config),
+                name=f"mcp_connect_{server_name}"
+            )
+            tasks.append(task)
+        
+        # Wait for all connections to complete (or timeout)
+        if tasks:
+            await asyncio.gather(*tasks, return_exceptions=True)
+        
+        self.logger.info("Completed MCP servers connection")
     
-    async def _start_mcp_server(self, server_name: str, config: Dict[str, Any]) -> None:
-        """Start a single MCP server as stdio subprocess"""
+    async def _connect_to_mcp_server(self, server_name: str, config: Dict[str, Any]) -> None:
+        """Connect to an MCP server via stdio"""
+        self.logger.info(f"[{server_name}] Connecting to MCP server via stdio")
+        
+        # Get command from config
         command = config.get("command")
-        args = config.get("args", [])
-        env = config.get("env", {})
-        
         if not command:
-            raise ValueError(f"No command specified for MCP server {server_name}")
+            self.logger.error(f"[{server_name}] No command specified in config")
+            return        
+        self.logger.info(f"[{server_name}] Command: {command}")
         
-        # Prepare environment
-        server_env = os.environ.copy()
-        server_env.update(env)
-        
-        # Start the subprocess
-        full_command = [command] + args
-        process = await asyncio.create_subprocess_exec(
-            *full_command,
-            stdin=subprocess.PIPE,
-            stdout=subprocess.PIPE,
-            stderr=subprocess.PIPE,
-            env=server_env
-        )
-        
-        # Store the process
-        self.mcp_processes[server_name] = process
-        
-        # Create MCP client session
-        server_params = StdioServerParameters(
-            command=command,
-            args=args,
-            env=env
-        )
-        
-        # Connect to the MCP server
-        session = await stdio_client(server_params)
-        self.mcp_sessions[server_name] = session
-        
-        # Get available tools from this server
-        try:
-            tools_result = await session.list_tools()
-            tools = tools_result.tools if hasattr(tools_result, 'tools') else []
-            self.mcp_tools[server_name] = tools
-            self.logger.info(f"Loaded {len(tools)} tools from MCP server {server_name}")
+        try:            # Create stdio server parameters
+            server_params = StdioServerParameters(
+                command=command[0],
+                args=command[1:] if len(command) > 1 else [],
+                env=None
+            )
+              # Create stdio client and session with timeout
+            stdio_client_manager = stdio_client(server_params)
+            self.mcp_client_managers[server_name] = stdio_client_manager            # Enter the async context to start the server with timeout
+            (read_stream, write_stream) = await asyncio.wait_for(
+                stdio_client_manager.__aenter__(), 
+                timeout=10.0
+            )
+            session = ClientSession(read_stream, write_stream)
+            
+            # Initialize the session with timeout
+            await asyncio.wait_for(session.initialize(), timeout=2.0)
+            
+            # Store the session
+            self.mcp_sessions[server_name] = session
+            
+            # Get available tools from the server with timeout
+            tools = await asyncio.wait_for(session.list_tools(), timeout=1.0)
+            self.mcp_tools[server_name] = tools.tools
+            
+            self.logger.info(f"[{server_name}] Connected successfully with {len(tools.tools)} tools")
+                        
+        except asyncio.TimeoutError:
+            self.logger.warning(f"[{server_name}] Timeout connecting to MCP server")
         except Exception as e:
-            self.logger.error(f"Failed to list tools from MCP server {server_name}: {e}")
+            self.logger.warning(f"[{server_name}] Failed to connect to MCP server: {e}")
+            # Continue without this MCP server - agent can still run
+            self.mcp_sessions[server_name] = None
             self.mcp_tools[server_name] = []
     
     async def cleanup(self) -> None:
-        """Cleanup MCP processes and sessions"""
-        # Close MCP sessions
-        for server_name, session in self.mcp_sessions.items():
+        """Cleanup MCP client managers and sessions"""
+        # Close MCP client managers (which will also close sessions and subprocesses)
+        for server_name, client_manager in self.mcp_client_managers.items():
             try:
-                await session.close()
-                self.logger.info(f"Closed MCP session: {server_name}")
+                await client_manager.__aexit__(None, None, None)
+                self.logger.info(f"Closed MCP client manager: {server_name}")
             except Exception as e:
-                self.logger.error(f"Error closing MCP session {server_name}: {e}")
-        
-        # Terminate MCP processes
-        for server_name, process in self.mcp_processes.items():
-            try:
-                process.terminate()
-                await process.wait()
-                self.logger.info(f"Terminated MCP process: {server_name}")
-            except Exception as e:
-                self.logger.error(f"Error terminating MCP process {server_name}: {e}")
+                self.logger.error(f"Error closing MCP client manager {server_name}: {e}")
     
     async def run(self) -> None:
         """Run the agent with both A2A and HTTP servers"""
@@ -222,6 +234,10 @@ class BaseA2AAgent(A2AServer, ABC):
         if server_name not in self.mcp_sessions:
             raise ValueError(f"MCP server '{server_name}' not available")
         
+        session = self.mcp_sessions[server_name]
+        if not session:
+            raise ValueError(f"MCP server '{server_name}' not connected")
+        
         if server_name not in self.mcp_tools:
             raise ValueError(f"No tools available for MCP server '{server_name}'")
         
@@ -232,7 +248,7 @@ class BaseA2AAgent(A2AServer, ABC):
             raise ValueError(f"Tool '{tool_name}' not found in server '{server_name}'")
         
         try:
-            session = self.mcp_sessions[server_name]
+            # Call the tool using the MCP session
             result = await session.call_tool(tool_name, kwargs)
             self.logger.info(f"Called MCP tool {tool_name} on {server_name}", result=result)
             return result
