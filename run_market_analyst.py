@@ -12,6 +12,14 @@ from pathlib import Path
 project_root = Path(__file__).parent
 sys.path.insert(0, str(project_root))
 
+# Load environment variables from .env file
+try:
+    from dotenv import load_dotenv
+    load_dotenv()
+    print("🔧 Loaded environment variables from .env file")
+except ImportError:
+    print("⚠️  python-dotenv not found, using system environment variables only")
+
 from agents.market_analyst.main import MarketAnalystAgent
 
 

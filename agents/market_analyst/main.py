@@ -2,6 +2,7 @@
 Market Analyst Agent - A2A-compliant agent for stock analysis using LangGraph
 """
 import asyncio
+import os
 from typing import Dict, Any, Optional
 from datetime import datetime
 
@@ -25,15 +26,17 @@ class MarketAnalystAgent(BaseA2AAgent):
     """A2A-compliant Market Analyst Agent with LangGraph"""
     
     def __init__(self):
-        settings = get_settings()        # MCP servers configuration (HTTP endpoints to running servers)
+        settings = get_settings()        # MCP servers configuration (stdio commands like test_mcp_servers.py)
         mcp_servers = {
             "alpaca": {
-                "url": "http://localhost:8000",
-                "type": "http"
-            },
-            "gmail": {
-                "url": "http://localhost:8004", 
-                "type": "http"
+                "command": ".venv\\Scripts\\python.exe",
+                "args": ["./mcp_servers/alpaca/alpaca_mcp_server.py"],
+                "env": {
+                    "ALPACA_API_KEY": os.getenv("ALPACA_API_KEY", ""),
+                    "ALPACA_SECRET_KEY": os.getenv("ALPACA_SECRET_KEY", ""),
+                    "ALPACA_BASE_URL": os.getenv("ALPACA_BASE_URL", "https://paper-api.alpaca.markets"),
+                    "PAPER": "True"
+                }
             }
         }
         
