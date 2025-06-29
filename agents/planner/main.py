@@ -97,10 +97,15 @@ class PlannerAgent(BaseA2AAgent):
     async def setup(self) -> None:
         """Setup the agent and build the LangGraph"""
         await super().setup()
-        self._build_planning_graph()
+        await self._build_planning_graph()
+        await self.setup_routes()
+        await self.setup_routes()  # Setup HTTP routes
     
-    def _build_planning_graph(self) -> None:
+    async def _build_planning_graph(self) -> None:
         """Build LangGraph for trade planning workflow"""
+        
+        # Get all available MCP tools converted to LangChain format
+        all_tools = await self.get_langchain_tools()
         
         def plan_trade(state: MessagesState) -> Dict[str, Any]:
             """Plan trades using LLM and MCP tools"""
@@ -119,8 +124,8 @@ class PlannerAgent(BaseA2AAgent):
             """)
             
             # Bind MCP tools if available
-            if self.mcp_tools:
-                llm_with_tools = self.llm.bind_tools(self.mcp_tools)
+            if all_tools:
+                llm_with_tools = self.llm.bind_tools(all_tools)
             else:
                 llm_with_tools = self.llm
             
@@ -131,8 +136,8 @@ class PlannerAgent(BaseA2AAgent):
         builder = StateGraph(MessagesState)
         builder.add_node("plan", plan_trade)
         
-        if self.mcp_tools:
-            builder.add_node("tools", ToolNode(self.mcp_tools))
+        if all_tools:
+            builder.add_node("tools", ToolNode(all_tools))
             builder.add_edge(START, "plan")
             builder.add_conditional_edges(
                 "plan",
@@ -181,7 +186,8 @@ class PlannerAgent(BaseA2AAgent):
             """
             
             # Use MCP tools for portfolio data if available
-            if self.mcp_tools:
+            available_tools = await self.get_mcp_tools()
+            if available_tools:
                 try:
                     portfolio_data = await self.call_mcp_tool("get_portfolio")
                     planning_context += f"\nCurrent Portfolio: {portfolio_data}"
@@ -219,7 +225,8 @@ class PlannerAgent(BaseA2AAgent):
         """Execute a trade order"""
         try:
             # Use MCP tools to execute trade if available
-            if self.mcp_tools:
+            available_tools = await self.get_mcp_tools()
+            if available_tools:
                 order_result = await self.call_mcp_tool(
                     "place_order",
                     symbol=ticker,
@@ -245,7 +252,8 @@ class PlannerAgent(BaseA2AAgent):
         """Analyze portfolio and suggest optimizations"""
         try:
             # Get portfolio data using MCP tools
-            if self.mcp_tools:
+            available_tools = await self.get_mcp_tools()
+            if available_tools:
                 portfolio_data = await self.call_mcp_tool("get_portfolio")
                 positions = await self.call_mcp_tool("get_positions")
                 
@@ -341,7 +349,34 @@ class PlannerAgent(BaseA2AAgent):
             )
         
         return task
-
+    
+    async def setup_routes(self) -> None:
+        """Setup additional FastAPI routes for testing"""
+        
+        @self.app.post("/plan")
+        async def plan_endpoint(request: Dict[str, Any]):
+            """Trade planning endpoint for HTTP testing"""
+            ticker = request.get("ticker", "AAPL")
+            action = request.get("action", "buy")
+            analysis = request.get("analysis", "")
+            try:
+                result = await self.create_trade_plan_skill(ticker, action, analysis)
+                return {"status": "success", "plan": result}
+            except Exception as e:
+                return {"status": "error", "message": str(e)}
+        
+        @self.app.post("/execute")
+        async def execute_endpoint(request: Dict[str, Any]):
+            """Trade execution endpoint for HTTP testing"""
+            ticker = request.get("ticker", "AAPL")
+            action = request.get("action", "buy")
+            quantity = request.get("quantity", 10)
+            order_type = request.get("order_type", "market")
+            try:
+                result = await self.execute_trade_skill(ticker, action, quantity, order_type)
+                return {"status": "success", "execution": result}
+            except Exception as e:
+                return {"status": "error", "message": str(e)}
 
 async def main():
     """Main entry point for the Planner agent"""

@@ -311,3 +311,38 @@ class BaseA2AAgent(A2AServer, ABC):
                 }
             )
             return task
+
+    async def get_langchain_tools(self, server_name: Optional[str] = None) -> List[Any]:
+        """Get MCP tools converted to LangChain-compatible format"""
+        from langchain_core.tools import BaseTool
+        from typing import Type
+        from pydantic import BaseModel, Field
+        
+        mcp_tools = await self.get_mcp_tools(server_name)
+        langchain_tools = []
+        
+        for mcp_tool in mcp_tools:
+            # Create a closure to capture the tool reference
+            def make_tool_func(tool_ref):
+                async def tool_func(**kwargs):
+                    """Execute the MCP tool"""
+                    try:
+                        result = await self.call_mcp_tool(tool_ref.name, **kwargs)
+                        return str(result)
+                    except Exception as e:
+                        return f"Error calling tool {tool_ref.name}: {e}"
+                
+                # Set the function metadata
+                tool_func.__name__ = tool_ref.name
+                tool_func.__doc__ = tool_ref.description or f"MCP tool: {tool_ref.name}"
+                return tool_func
+            
+            # Create the tool function with proper closure
+            tool_function = make_tool_func(mcp_tool)
+            
+            # Create LangChain tool using the function
+            from langchain_core.tools import tool
+            langchain_tool = tool(tool_function)
+            langchain_tools.append(langchain_tool)
+        
+        return langchain_tools

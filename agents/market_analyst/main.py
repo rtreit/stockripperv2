@@ -139,7 +139,7 @@ class MarketAnalystAgent(BaseA2AAgent):
             # Use MCP tools for data if available
             analysis_context = f"Analyzing {ticker}"
             
-            if "alpaca" in self.mcp_sessions and self.mcp_sessions["alpaca"]:
+            if "alpaca" in self.mcp_clients:
                 # Try to get stock data from Alpaca MCP server
                 try:
                     # Get available tools first
@@ -192,7 +192,7 @@ class MarketAnalystAgent(BaseA2AAgent):
             # Use MCP tools for market data if available
             analysis_prompt = "Provide current market overview and trends analysis"
             
-            if "alpaca" in self.mcp_sessions and self.mcp_sessions["alpaca"]:
+            if "alpaca" in self.mcp_clients:
                 try:
                     # Try to get market data from Alpaca
                     alpaca_tools = await self.get_mcp_tools("alpaca")
@@ -307,9 +307,9 @@ class MarketAnalystAgent(BaseA2AAgent):
         async def mcp_status_endpoint():
             """Check MCP server connection status"""
             return {
-                "mcp_sessions": {k: {"connected": bool(v and v.get("connected", False))} for k, v in self.mcp_sessions.items()},
+                "mcp_clients": {k: {"connected": bool(v)} for k, v in self.mcp_clients.items()},
                 "mcp_tools": {k: len(v) if v else 0 for k, v in self.mcp_tools.items()},
-                "available_servers": list(self.mcp_sessions.keys())
+                "available_servers": list(self.mcp_clients.keys())
             }
 
 

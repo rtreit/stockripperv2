@@ -188,33 +188,26 @@ class MailerAgent(BaseA2AAgent):
                 send_email_tool = None
                 
                 for tool in gmail_tools:
-                    if tool.name == "send_email":
+                    if tool.name == "send_gmail_message":
                         send_email_tool = tool
                         break
                 
                 if not send_email_tool:
-                    return {**state, "error": "Gmail send_email tool not available"}
+                    return {**state, "error": "Gmail send_gmail_message tool not available"}
                 
-                # Prepare email data for Gmail MCP
-                email_data = {
-                    "to": email_notification.to,
-                    "subject": email_notification.subject,
-                    "body": email_notification.body,
-                    "mimeType": "text/html" if email_notification.html_body else "text/plain"
-                }
+                # Prepare email data for Gmail MCP send_gmail_message tool
+                to_email = email_notification.to[0] if email_notification.to else self.settings.default_email_recipient
                 
-                if email_notification.html_body:
-                    email_data["htmlBody"] = email_notification.html_body
-                    email_data["mimeType"] = "multipart/alternative"
-                
-                if email_notification.cc:
-                    email_data["cc"] = email_notification.cc
-                
-                if email_notification.bcc:
-                    email_data["bcc"] = email_notification.bcc
-                
-                # Send email via MCP
-                result = await send_email_tool.ainvoke(email_data)
+                # Send email via Gmail MCP tool
+                result = await self.call_mcp_tool(
+                    "gmail",  # server_name
+                    "send_gmail_message",  # tool_name
+                    service="gmail",  # Required service parameter
+                    user_google_email="rtreit@gmail.com",  # Authenticated Gmail user
+                    to=to_email,
+                    subject=email_notification.subject,
+                    body=email_notification.body
+                )
                 
                 logger.info("Email sent successfully", 
                            extra={"recipients": email_notification.to, "subject": email_notification.subject})
@@ -338,6 +331,52 @@ class MailerAgent(BaseA2AAgent):
             
             result = await self.handle_trade_plan_notification(trade_plan)
             return result
+        
+        @self.app.post("/send_notification")
+        async def send_notification_endpoint(request_data: dict):
+            """Endpoint to send email notifications with analysis and plan."""
+            ticker = request_data.get("ticker", "UNKNOWN")
+            analysis = request_data.get("analysis", "")
+            plan = request_data.get("plan", "")
+            notification_type = request_data.get("notification_type", "trade_analysis")
+            
+            try:
+                # Create a combined trade plan for the notification
+                trade_plan = {
+                    "ticker": ticker,
+                    "analysis": analysis,
+                    "plan": plan,
+                    "notification_type": notification_type
+                }
+                
+                result = await self.handle_trade_plan_notification(trade_plan)
+                return {"status": "success", "email_details": result}
+            except Exception as e:
+                return {"status": "error", "message": str(e)}
+        
+        @self.app.get("/debug/tools")
+        async def debug_tools_endpoint():
+            """Debug endpoint to list all available Gmail MCP tools."""
+            try:
+                gmail_tools = await self.get_mcp_tools("gmail")
+                tool_list = []
+                for tool in gmail_tools:
+                    tool_list.append({
+                        "name": tool.name,
+                        "description": getattr(tool, 'description', 'No description')[:100]
+                    })
+                
+                return {
+                    "total_tools": len(gmail_tools),
+                    "tools": tool_list
+                }
+            except Exception as e:
+                return {"error": str(e)}
+
+    async def setup(self) -> None:
+        """Setup the agent and build the workflow"""
+        await super().setup()
+        self.workflow = self._build_workflow()
 
 
 async def main():
