@@ -8,10 +8,12 @@ import sys
 import os
 import httpx
 from datetime import datetime
-from config import get_settings
 
 # Add project root to Python path
-sys.path.append(os.path.dirname(os.path.abspath(__file__)))
+from pathlib import Path
+sys.path.insert(0, str(Path(__file__).parent.parent.parent))
+
+from config import get_settings
 
 
 class E2EWorkflowTest:

@@ -5,15 +5,22 @@ Confirms all agents are operational and the Gmail integration is working.
 """
 
 import asyncio
+import sys
+import os
 import httpx
 from datetime import datetime
 import json
 
+# Add project root to Python path
+import sys
+from pathlib import Path
+sys.path.insert(0, str(Path(__file__).parent.parent.parent)) 
+
 async def verify_complete_system():
     """Verify the complete StockRipper system functionality."""
-    print("🔍 StockRipper v2 - Final System Verification")
+    print("StockRipper v2 - Final System Verification")
     print("=" * 50)
-    print(f"🕐 Verification time: {datetime.now().strftime('%H:%M:%S')}")
+    print(f"Verification time: {datetime.now().strftime('%H:%M:%S')}")
     print()
     
     # Agent endpoints
@@ -24,18 +31,18 @@ async def verify_complete_system():
     }
     
     async with httpx.AsyncClient(timeout=10.0) as client:
-        print("🏥 Agent Health Check:")
+        print("Agent Health Check:")
         all_healthy = True
         
         for name, url in agents.items():
             try:
                 response = await client.get(url)
-                status = "✅ HEALTHY" if response.status_code == 200 else "❌ UNHEALTHY"
+                status = "HEALTHY" if response.status_code == 200 else "UNHEALTHY"
                 print(f"  {name}: {status}")
                 if response.status_code != 200:
                     all_healthy = False
             except Exception as e:
-                print(f"  {name}: ❌ OFFLINE ({e})")
+                print(f"  {name}: OFFLINE ({e})")
                 all_healthy = False
         
         print()
@@ -45,13 +52,13 @@ async def verify_complete_system():
             return False
         
         # Test Gmail functionality
-        print("📧 Gmail Integration Test:")
+        print("Gmail Integration Test:")
         try:
             gmail_tools_response = await client.get("http://localhost:8003/debug/tools")
             if gmail_tools_response.status_code == 200:
                 tools_data = gmail_tools_response.json()
                 gmail_tools_count = tools_data.get("total_tools", 0)
-                print(f"  ✅ Gmail MCP Tools Available: {gmail_tools_count}")
+                print(f"  Gmail MCP Tools Available: {gmail_tools_count}")
                 
                 # Find send_gmail_message tool
                 send_tool_found = False
@@ -61,7 +68,7 @@ async def verify_complete_system():
                         break
                         
                 if send_tool_found:
-                    print("  ✅ send_gmail_message tool detected")
+                    print("  send_gmail_message tool detected")
                 else:
                     print("  ❌ send_gmail_message tool not found")
                     return False
@@ -74,7 +81,7 @@ async def verify_complete_system():
             return False
         
         print()
-        print("🎊 VERIFICATION COMPLETE!")
+        print("VERIFICATION COMPLETE!")
         print("=" * 50)
         print("✅ All agents are healthy and operational")
         print("✅ Gmail MCP integration is working")
