@@ -24,7 +24,7 @@ spec:
     spec:
       containers:
         - name: {{ .Values.planner.name }}
-          image: "{{ .Values.global.imageRegistry }}/{{ .Values.planner.image.repository }}:{{ .Values.planner.image.tag }}"
+          image: "{{- if .Values.global.imageRegistry }}{{ .Values.global.imageRegistry }}/{{- end }}{{ .Values.planner.image.repository }}:{{ .Values.planner.image.tag }}"
           imagePullPolicy: {{ .Values.planner.image.pullPolicy }}
           ports:
             - name: http

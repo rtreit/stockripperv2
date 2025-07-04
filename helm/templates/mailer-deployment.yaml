@@ -24,7 +24,7 @@ spec:
     spec:
       containers:
         - name: {{ .Values.mailer.name }}
-          image: "{{ .Values.global.imageRegistry }}/{{ .Values.mailer.image.repository }}:{{ .Values.mailer.image.tag }}"
+          image: "{{- if .Values.global.imageRegistry }}{{ .Values.global.imageRegistry }}/{{- end }}{{ .Values.mailer.image.repository }}:{{ .Values.mailer.image.tag }}"
           imagePullPolicy: {{ .Values.mailer.image.pullPolicy }}
           ports:
             - name: http
@@ -77,6 +77,6 @@ spec:
       volumes:
         - name: gmail-credentials
           secret:
-            secretName: gmail-secret
+            secretName: gmail-credentials
       restartPolicy: Always
 {{- end }}

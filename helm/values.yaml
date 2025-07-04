@@ -1,8 +1,8 @@
 # Global configuration
 global:
   namespace: stockripper
-  imageRegistry: ghcr.io/yourusername
-  imagePullPolicy: IfNotPresent
+  imageRegistry: ""
+  imagePullPolicy: Never
   
 # Common environment variables
 env:
@@ -24,8 +24,8 @@ marketAnalyst:
   replicaCount: 1
   image:
     repository: stockripper/market-analyst
-    tag: "1.0.0"
-    pullPolicy: IfNotPresent
+    tag: "latest"
+    pullPolicy: Never
   
   service:
     type: ClusterIP
@@ -55,7 +55,7 @@ marketAnalyst:
     ALPACA_API_KEY: ""  # Set via secret
     ALPACA_SECRET_KEY: ""  # Set via secret
     ALPACA_BASE_URL: "https://paper-api.alpaca.markets"
-    ALPACA_MCP_URL: "http://alpaca-mcp:9001"
+    ALPACA_MCP_URL: ""
 
 # Planner Agent  
 planner:
@@ -64,8 +64,8 @@ planner:
   replicaCount: 1
   image:
     repository: stockripper/planner
-    tag: "1.0.0"
-    pullPolicy: IfNotPresent
+    tag: "latest"
+    pullPolicy: Never
   
   service:
     type: ClusterIP
@@ -101,8 +101,8 @@ mailer:
   replicaCount: 1
   image:
     repository: stockripper/mailer
-    tag: "1.0.0"
-    pullPolicy: IfNotPresent
+    tag: "latest"
+    pullPolicy: Never
   
   service:
     type: ClusterIP

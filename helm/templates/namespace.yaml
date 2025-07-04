@@ -1,3 +1,4 @@
+{{- if .Values.global.createNamespace }}
 apiVersion: v1
 kind: Namespace
 metadata:
@@ -5,5 +6,6 @@ metadata:
   labels:
     {{- include "stockripperv2.labels" . | nindent 4 }}
     app.kubernetes.io/component: namespace
+{{- end }}
 
 # Contains AI-generated edits.

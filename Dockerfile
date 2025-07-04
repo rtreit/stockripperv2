@@ -30,11 +30,29 @@ COPY . .
 RUN chown -R appuser:appuser /app
 USER appuser
 
-# Health check
+# Base image - can be used as-is or extended
+FROM base as stockripper-base
+
+# Market Analyst image
+FROM base as market-analyst
+EXPOSE 8001
 HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \
-    CMD curl -f http://localhost:8000/health || exit 1
+    CMD curl -f http://localhost:8001/health || exit 1
+CMD ["python", "run_market_analyst.py"]
 
-# Default command (override in docker-compose for specific agents)
-CMD ["python", "-m", "agents.market_analyst.main"]
+# Trade Planner image  
+FROM base as planner
+EXPOSE 8002
+HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \
+    CMD curl -f http://localhost:8002/health || exit 1
+CMD ["python", "run_planner.py"]
 
-# Contains AI-generated edits.
+# Mailer image
+FROM base as mailer
+EXPOSE 8003
+HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \
+    CMD curl -f http://localhost:8003/health || exit 1
+CMD ["python", "run_mailer.py"]
+
+# Default to market analyst if no target specified
+FROM market-analyst

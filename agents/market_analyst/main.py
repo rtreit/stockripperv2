@@ -29,7 +29,7 @@ class MarketAnalystAgent(BaseA2AAgent):
         settings = get_settings()        # MCP servers configuration (stdio commands like test_mcp_servers.py)
         mcp_servers = {
             "alpaca": {
-                "command": ".venv\\Scripts\\python.exe",
+                "command": "python",
                 "args": ["./mcp_servers/alpaca/alpaca_mcp_server.py"],
                 "env": {
                     "ALPACA_API_KEY": os.getenv("ALPACA_API_KEY", ""),
@@ -281,7 +281,7 @@ class MarketAnalystAgent(BaseA2AAgent):
         
         return task
 
-    async def setup_routes(self) -> None:
+    async def setup_routes(self, app=None) -> None:
         """Setup additional FastAPI routes for testing"""
         
         @self.app.post("/analyze")

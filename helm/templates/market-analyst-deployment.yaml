@@ -24,7 +24,7 @@ spec:
     spec:
       containers:
         - name: {{ .Values.marketAnalyst.name }}
-          image: "{{ .Values.global.imageRegistry }}/{{ .Values.marketAnalyst.image.repository }}:{{ .Values.marketAnalyst.image.tag }}"
+          image: "{{- if .Values.global.imageRegistry }}{{ .Values.global.imageRegistry }}/{{- end }}{{ .Values.marketAnalyst.image.repository }}:{{ .Values.marketAnalyst.image.tag }}"
           imagePullPolicy: {{ .Values.marketAnalyst.image.pullPolicy }}
           ports:
             - name: http
@@ -34,20 +34,20 @@ spec:
             - name: OPENAI_API_KEY
               valueFrom:
                 secretKeyRef:
-                  name: openai-secret
-                  key: api-key
+                  name: stockripper-secrets
+                  key: openai-api-key
             - name: OPENAI_MODEL
               value: {{ .Values.env.openai.model | quote }}
             - name: ALPACA_API_KEY
               valueFrom:
                 secretKeyRef:
-                  name: alpaca-secret
-                  key: api-key
+                  name: stockripper-secrets
+                  key: alpaca-api-key
             - name: ALPACA_SECRET_KEY
               valueFrom:
                 secretKeyRef:
-                  name: alpaca-secret
-                  key: secret-key
+                  name: stockripper-secrets
+                  key: alpaca-secret-key
             - name: ALPACA_BASE_URL
               value: {{ .Values.marketAnalyst.env.ALPACA_BASE_URL | quote }}
             - name: ALPACA_MCP_URL

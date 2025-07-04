@@ -19,6 +19,7 @@ uvicorn>=0.31.0
 
 # MCP client and servers
 mcp>=1.1.0
+fastmcp>=0.1.0
 
 # Development and testing
 pytest>=8.0.0

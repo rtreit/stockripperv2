@@ -11,8 +11,8 @@ RUN apt-get update && apt-get install -y \
     npm \
     && rm -rf /var/lib/apt/lists/*
 
-# Install MCP servers via npm (Gmail server for this agent)
-RUN npm install -g @modelcontextprotocol/server-gmail
+# Install MCP servers via npm
+RUN npm install -g @modelcontextprotocol/server-everything @modelcontextprotocol/server-filesystem
 
 # Copy requirements and install Python dependencies
 COPY requirements.txt .
