@@ -268,34 +268,6 @@ class MailerAgent(BaseA2AAgent):
             "agent": self.agent_card.name
         }
 
-    def get_agent_card(self) -> Dict[str, Any]:
-        """Return agent card for A2A discovery."""
-        return {
-            "name": self.agent_card.name,
-            "description": self.agent_card.description,
-            "version": self.agent_card.version,
-            "url": self.agent_card.url,
-            "capabilities": [
-                "send_email_notifications",
-                "compose_trade_alerts",
-                "gmail_integration"
-            ],
-            "endpoints": [
-                {
-                    "path": "/trade-notification",
-                    "method": "POST",
-                    "description": "Send email notification for trade plan",
-                    "parameters": {
-                        "trade_plan": {
-                            "type": "object",
-                            "description": "Trading plan to notify about"
-                        }
-                    }
-                }
-            ],
-            "mcp_servers": ["gmail"],
-            "contact": "mailer@stockripper.com"
-        }
 
     async def process_task(self, task) -> Any:
         """Process an A2A task for the mailer agent"""
@@ -389,4 +361,3 @@ async def main():
 if __name__ == "__main__":
     asyncio.run(main())
 
-# Contains AI-generated edits.

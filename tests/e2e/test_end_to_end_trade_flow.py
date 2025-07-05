@@ -100,4 +100,3 @@ async def test_agent_health_checks(a2a_client, mock_settings):
         assert health["status"] == "success"
 
 
-# Contains AI-generated edits.

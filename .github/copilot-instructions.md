@@ -24,4 +24,3 @@ When I ask for code:
 1. Produce a complete, runnable snippet.  
 2. Comment *why*, not *what*.  
 3. Include test stubs **only** if I ask for tests.  
-4. Append the line `# Contains AI-generated edits.` at EOF.  

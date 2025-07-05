@@ -249,4 +249,3 @@ try {
     exit 1
 }
 
-# Contains AI-generated edits.

@@ -39,4 +39,3 @@ EXPOSE 8003
 # Run the application
 CMD ["python", "-m", "agents.mailer.main"]
 
-# Contains AI-generated edits.
