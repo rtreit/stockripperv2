@@ -53,7 +53,8 @@ class MailerAgent(BaseA2AAgent):
                 "env": {
                     "GOOGLE_APPLICATION_CREDENTIALS": settings.gmail_credentials_path,
                     "GMAIL_CREDENTIALS_PATH": settings.gmail_credentials_path,
-                    "GMAIL_TOKEN_PATH": settings.gmail_token_path
+                    "GMAIL_TOKEN_PATH": settings.gmail_token_path,
+                    "WORKSPACE_MCP_PORT": str(settings.workspace_mcp_port)
                 }
             }
         }
