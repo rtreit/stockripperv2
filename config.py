@@ -84,4 +84,3 @@ setup_logging(settings)
 logger = structlog.get_logger()
 
 
-# Contains AI-generated edits.

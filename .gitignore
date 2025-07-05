@@ -304,7 +304,6 @@ log/
 .DS_Store
 Thumbs.db
 
-# Contains AI-generated edits.
 
 # IDE Configuration (may contain secrets)
 .vscode/

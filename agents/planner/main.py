@@ -99,7 +99,6 @@ class PlannerAgent(BaseA2AAgent):
         await super().setup()
         await self._build_planning_graph()
         await self.setup_routes()
-        await self.setup_routes()  # Setup HTTP routes
     
     async def _build_planning_graph(self) -> None:
         """Build LangGraph for trade planning workflow"""
@@ -397,4 +396,3 @@ if __name__ == "__main__":
     asyncio.run(main())
 
 
-# Contains AI-generated edits.

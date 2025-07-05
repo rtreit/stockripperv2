@@ -39,4 +39,3 @@ EXPOSE 8001
 # Run the application
 CMD ["python", "-m", "agents.market_analyst.main"]
 
-# Contains AI-generated edits.

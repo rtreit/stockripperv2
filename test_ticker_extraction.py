@@ -40,4 +40,3 @@ def test_ticker_extraction():
 if __name__ == "__main__":
     test_ticker_extraction()
 
-# Contains AI-generated edits.

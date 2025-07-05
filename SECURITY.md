@@ -129,4 +129,3 @@ The following folders may contain sensitive information and are excluded from gi
 - `.github/personal/` - Personal GitHub configurations
 - `.github/local/` - Local GitHub configurations
 
-# Contains AI-generated edits.
