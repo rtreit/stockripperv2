@@ -29,8 +29,8 @@ marketAnalyst:
   
   service:
     type: ClusterIP
-    port: 8001
-    targetPort: 8001
+    port: 8009
+    targetPort: 8009
   
   ingress:
     enabled: true
@@ -92,7 +92,7 @@ planner:
       memory: 256Mi
   
   env:
-    MARKET_ANALYST_URL: "http://market-analyst:8001"
+    MARKET_ANALYST_URL: "http://market-analyst:8009"
 
 # Mailer Agent
 mailer:

@@ -17,7 +17,7 @@ class Settings(BaseSettings):
     openai_model: str = Field(default="gpt-4o-mini", description="OpenAI Model")
     anthropic_api_key: Optional[str] = Field(default=None, description="Anthropic API Key")
       # Agent URLs
-    market_analyst_url: str = Field(default="http://localhost:8001", description="Market Analyst URL")
+    market_analyst_url: str = Field(default="http://localhost:8009", description="Market Analyst URL")
     planner_url: str = Field(default="http://localhost:8002", description="Planner URL") 
     mailer_url: str = Field(default="http://localhost:8003", description="Mailer URL")
     
