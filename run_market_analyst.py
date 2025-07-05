@@ -4,6 +4,7 @@ Run Market Analyst agent locally for development and testing.
 This script starts the Market Analyst agent with MCP server integration.
 """
 
+import asyncio
 import sys
 from pathlib import Path
 
@@ -19,35 +20,31 @@ try:
 except ImportError:
     print("⚠️  python-dotenv not found, using system environment variables only")
 
-from agents.market_analyst.main import StockResearchAgent
+from agents.market_analyst.main import main as market_analyst_main
 
 
 def main():
-    """Main function to run the Stock Research Agent."""
+    """Main function to run the Market Analyst Agent."""
     
-    print("Starting Stock Research Agent")
+    print("Starting Market Analyst Agent")
     print("=" * 40)
     
     try:
-        # Create and run the agent
-        agent = StockResearchAgent()
-        print(f"📊 Agent: Stock Research Agent")
-        print(f"🌐 URL: http://localhost:8009")
-        print(f"⚡ Agent initialized successfully")
+        print(f"📊 Agent: Market Analyst Agent")
+        print(f"🌐 URL: http://localhost:8001")
         
         print("\n🎯 Agent is starting...")
         print("   - Press Ctrl+C to stop")
-        print("   - Check http://localhost:8009/a2a/agent.json for discovery")
-        print("   - Check http://localhost:8009/ for web interface")
+        print("   - Check http://localhost:8001/.well-known/agent.json for discovery")
+        print("   - Check http://localhost:8001/health for health status")
         
-        # Run the agent using the run_server function directly
-        from python_a2a import run_server
-        run_server(agent, host="0.0.0.0", port=8009)
+        # Run the agent using its own main function
+        asyncio.run(market_analyst_main())
         
     except KeyboardInterrupt:
-        print("\n👋 Stock Research Agent stopped by user")
+        print("\n👋 Market Analyst Agent stopped by user")
     except Exception as e:
-        print(f"\n❌ Error running Stock Research Agent: {e}")
+        print(f"\n❌ Error running Market Analyst Agent: {e}")
         import traceback
         traceback.print_exc()
         sys.exit(1)
@@ -55,5 +52,3 @@ def main():
 
 if __name__ == "__main__":
     main()
-
-# Contains AI-generated edits.

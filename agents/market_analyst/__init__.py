@@ -1,1 +1,1 @@
-from .main import StockResearchAgent, main
+from .main import MarketAnalystAgent, main
