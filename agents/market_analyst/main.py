@@ -6,7 +6,7 @@ import os
 from typing import Dict, Any, Optional
 from datetime import datetime
 
-from python_a2a import skill, run_server
+from python_a2a import skill
 from python_a2a.models import Task, TaskStatus, TaskState
 from langchain_openai import ChatOpenAI
 from langchain_anthropic import ChatAnthropic
@@ -97,7 +97,7 @@ class MarketAnalystAgent(BaseA2AAgent):
         """Setup the agent and build the LangGraph"""
         await super().setup()
         self._build_analysis_graph()
-    
+
     def _build_analysis_graph(self) -> None:
         """Build LangGraph for market analysis workflow"""
         
@@ -127,6 +127,8 @@ class MarketAnalystAgent(BaseA2AAgent):
         builder.add_edge(START, "analyze")
         
         self.analysis_graph = builder.compile()
+
+
     
     @skill(
         name="Analyze Stock",
@@ -315,17 +317,8 @@ class MarketAnalystAgent(BaseA2AAgent):
 
 async def main():
     """Main entry point for the Market Analyst agent"""
-    settings = get_settings()
-    setup_logging(settings)
-    
     agent = MarketAnalystAgent()
-    await agent.setup()
-    
-    logger.info("Starting Market Analyst Agent", url=settings.market_analyst_url)
-    
-    # Extract port from URL
-    port = int(settings.market_analyst_url.split(":")[-1])
-    run_server(agent, host="0.0.0.0", port=port)
+    await agent.run()
 
 
 if __name__ == "__main__":
